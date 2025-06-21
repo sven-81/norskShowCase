@@ -1,0 +1,58 @@
+[
+  {
+    "id": 1,
+    "german": "finden",
+    "norsk": "finne",
+    "norskPresent": "finner",
+    "norskPast": "fant",
+    "norskPastPerfect": "har funnet"
+  },
+  {
+    "id": 2,
+    "german": "gehen",
+    "norsk": "g\u00e5",
+    "norskPresent": "g\u00e5r",
+    "norskPast": "gikk",
+    "norskPastPerfect": "har g\u00e5tt"
+  },
+  {
+    "id": 3,
+    "german": "essen",
+    "norsk": "spise",
+    "norskPresent": "spiser",
+    "norskPast": "spiste",
+    "norskPastPerfect": "har spist"
+  },
+  {
+    "id": 4,
+    "german": "trinken",
+    "norsk": "drikke",
+    "norskPresent": "drikker",
+    "norskPast": "drakk",
+    "norskPastPerfect": "har drukket"
+  },
+  {
+    "id": 6,
+    "german": "kommen",
+    "norsk": "komme",
+    "norskPresent": "kommer",
+    "norskPast": "kom",
+    "norskPastPerfect": "har kommet"
+  },
+  {
+    "id": 7,
+    "german": "machen",
+    "norsk": "gj\u00f8re",
+    "norskPresent": "gj\u00f8r",
+    "norskPast": "gjorde",
+    "norskPastPerfect": "har gjort"
+  },
+  {
+    "id": 8,
+    "german": "sprechen",
+    "norsk": "snakke",
+    "norskPresent": "snakker",
+    "norskPast": "snakket",
+    "norskPastPerfect": "har snakket"
+  }
+]

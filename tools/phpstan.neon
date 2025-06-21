@@ -1,0 +1,13 @@
+includes:
+    - ../api/vendor/phpstan/phpstan-phpunit/extension.neon
+
+parameters:
+	level: 5
+
+	ignoreErrors:
+		- '#Call to static method PHPUnit\\Framework\\Assert::assertInstanceOf\(\) with .+ will always evaluate to true#'
+	paths:
+		- ../api
+	excludePaths:
+	    analyse:
+	        - ../api/vendor

@@ -1,0 +1,73 @@
+#general - dev staging
+name: norsk-staging
+
+services:
+  norsk-client:
+    container_name: norsk-client-staging
+    build:
+      context: ./client
+      dockerfile: ../docker/node.Dockerfile
+    ports:
+      - "8001:8000"
+    networks:
+      - norsk-staging
+    tty: true
+
+  api:
+    #gets calls from postman and vue for staging-testing; like prd-server settings
+    container_name: norsk-api-staging
+    restart: unless-stopped
+    build:
+      context: ./
+      dockerfile: docker/staging.api.Dockerfile
+    volumes:
+      - ./api/configs/mySqlConfig.staging.ini:/var/www/html/norsk/api/configs/mySqlConfig.ini
+      - ./api/configs/appConfig.ini:/var/www/html/norsk/api/configs/appConfig.ini
+      - ./api/configs/entrypoint.sh:/var/www/html/norsk/api/configs/entrypoint.sh
+      - ./api/configs/import.jwt:/var/www/html/norsk/api/configs/import.jwt
+      - ./api/logs:/var/www/html/norsk/api/logs:rw
+      - ./api/public:/var/www/html/norsk/api/public:rw
+      - ./api/src:/var/www/html/norsk/api/src:rw
+      - ./api/scripts:/var/www/html/norsk/api/scripts:rw
+      - ./api/tests/stubs/VirtualTestDatabase.php:/var/www/html/norsk/api/tests/stubs/VirtualTestDatabase.php:rw
+      - ./api/vendor:/var/www/html/norsk/api/vendor
+      - ./api/composer.json:/var/www/html/norsk/api/composer.json
+    ports:
+      - "9997:80"
+    environment:
+      API_ENV: "staging"
+    networks:
+      - norsk-staging
+    privileged: true
+    links:
+      - database-norsk-staging
+    depends_on:
+      - database-norsk-staging
+
+  database-norsk-staging:
+    container_name: database-norsk-staging
+    restart: unless-stopped
+    image: mariadb:10
+    volumes:
+      - ./database/staging:/var/lib/mysql
+    env_file:
+      - docker/config/database.staging.env
+    ports:
+      - "9914:3306"
+    networks:
+      - norsk-staging
+
+  composer:
+    container_name: norsk-composer-staging
+    image: composer:latest
+    command: [ "composer", "--working-dir=/var/www/html/norsk/api", "${CMD:-dump-autoload}", "--ignore-platform-reqs" ]
+    volumes:
+      - ./api:/var/www/html/norsk/api
+    networks:
+      - norsk-staging
+    depends_on:
+      - api
+
+networks:
+  norsk-staging:
+    driver: bridge

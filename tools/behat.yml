@@ -1,0 +1,36 @@
+default:
+  formatters:
+    pretty: true
+  autoload:
+    '': '%paths.base%/api/tests/acceptance/features/bootstrap'
+  suites:
+    register:
+      paths:
+        - './api/tests/acceptance/features/registration' # angepasst, um relativ zum aktuellen Verzeichnis zu sein
+      contexts:
+        - 'norsk\api\tests\acceptance\UserRegistrationDomainContext'
+    login:
+      paths:
+        - './api/tests/acceptance/features/login'
+      contexts:
+        - 'norsk\api\tests\acceptance\UserLoginDomainContext'
+    trainer/word:
+      paths:
+        - './api/tests/acceptance/features/trainer/word'
+      contexts:
+        - 'norsk\api\tests\acceptance\WordTrainerDomainContext'
+    trainer/verb:
+      paths:
+        - './api/tests/acceptance/features/trainer/verb'
+      contexts:
+        - 'norsk\api\tests\acceptance\VerbTrainerDomainContext'
+    manager/word:
+      paths:
+        - './api/tests/acceptance/features/manager/word'
+      contexts:
+        - 'norsk\api\tests\acceptance\WordManagerDomainContext'
+    manager/verb:
+      paths:
+        - './api/tests/acceptance/features/manager/verb'
+      contexts:
+        - 'norsk\api\tests\acceptance\VerbManagerDomainContext'

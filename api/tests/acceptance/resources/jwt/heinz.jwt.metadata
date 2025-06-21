@@ -1,0 +1,11 @@
+{
+  "alg": "HS512",
+  "typ": "JWT"
+}
+{
+  "sub": "norsk app",
+  "aud": "Norsk Client",
+  "scope": "is:manager",
+  "nickname": "heinz",
+  "exp": 1855218009
+}

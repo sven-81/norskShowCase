@@ -1,0 +1,216 @@
+Escaped mutants:
+================
+
+1) /app/api/src/app/NorskApi.php:40    [M] MethodCallRemoval
+
+@@ @@
+         $session = Session::create();
+         $this->router->run($this->app, $session);
+         $this->app->run();
+-        $session->destroy();
++        
+         $this->logger->info(LogMessage::fromString('Stopping Norsk API'));
+     }
+ }
+
+
+2) /app/api/src/app/config/AppConfig.php:142    [M] CastBool
+
+@@ @@
+         $displayErrorDetails = $logConfigItems['displayErrorDetails'];
+         $logErrors = $logConfigItems['logErrors'];
+         $logErrorDetails = $logConfigItems['logErrorDetails'];
+-        return AppLoggerConfig::by($path, (bool) $displayErrorDetails, (bool) $logErrors, (bool) $logErrorDetails);
++        return AppLoggerConfig::by($path, $displayErrorDetails, (bool) $logErrors, (bool) $logErrorDetails);
+     }
+     private static function readJwtConfig(array $auth): JwtConfig
+     {
+
+
+3) /app/api/src/app/config/AppConfig.php:142    [M] CastBool
+
+@@ @@
+         $displayErrorDetails = $logConfigItems['displayErrorDetails'];
+         $logErrors = $logConfigItems['logErrors'];
+         $logErrorDetails = $logConfigItems['logErrorDetails'];
+-        return AppLoggerConfig::by($path, (bool) $displayErrorDetails, (bool) $logErrors, (bool) $logErrorDetails);
++        return AppLoggerConfig::by($path, (bool) $displayErrorDetails, $logErrors, (bool) $logErrorDetails);
+     }
+     private static function readJwtConfig(array $auth): JwtConfig
+     {
+
+
+4) /app/api/src/app/config/AppConfig.php:142    [M] CastBool
+
+@@ @@
+         $displayErrorDetails = $logConfigItems['displayErrorDetails'];
+         $logErrors = $logConfigItems['logErrors'];
+         $logErrorDetails = $logConfigItems['logErrorDetails'];
+-        return AppLoggerConfig::by($path, (bool) $displayErrorDetails, (bool) $logErrors, (bool) $logErrorDetails);
++        return AppLoggerConfig::by($path, (bool) $displayErrorDetails, (bool) $logErrors, $logErrorDetails);
+     }
+     private static function readJwtConfig(array $auth): JwtConfig
+     {
+
+
+5) /app/api/src/app/identityAccessManagement/AuthenticationAlgorithm.php:39    [M] ArrayItemRemoval
+
+@@ @@
+      */
+     private static function getAlgorithmList(): array
+     {
+-        return ['HS256', 'HS384', 'HS512', 'PS256', 'PS384', 'PS512', 'RS256', 'RS384', 'RS512', 'ES256', 'ES256K', 'ES384', 'ES512', 'EdDSA'];
++        return ['HS384', 'HS512', 'PS256', 'PS384', 'PS512', 'RS256', 'RS384', 'RS512', 'ES256', 'ES256K', 'ES384', 'ES512', 'EdDSA'];
+     }
+     public function asString(): string
+     {
+
+
+6) /app/api/src/app/identityAccessManagement/Clock.php:30    [M] ConcatOperandRemoval
+
+@@ @@
+     }
+     public function addSeconds(int $seconds): self
+     {
+-        $newTime = $this->clock->modify('+' . $seconds . ' seconds');
++        $newTime = $this->clock->modify($seconds . ' seconds');
+         $newTime = $newTime->setTimezone(new DateTimeZone(self::EUROPE_BERLIN));
+         return new self($newTime);
+     }
+
+
+7) /app/api/src/app/identityAccessManagement/JsonWebToken.php:26    [M] PregMatchRemoveCaret
+
+@@ @@
+     }
+     private static function ensureTokenIsJwtValid(string $token): void
+     {
+-        if (!preg_match("/^([a-zA-Z0-9_=]{4,36})\\.([a-zA-Z0-9_=]{4,})\\.([a-zA-Z0-9_\\-+\\/=]{4,86})\$/", $token)) {
++        if (!preg_match("/([a-zA-Z0-9_=]{4,36})\\.([a-zA-Z0-9_=]{4,})\\.([a-zA-Z0-9_\\-+\\/=]{4,86})\$/", $token)) {
+             throw new InvalidArgumentException('Token has no valid format');
+         }
+     }
+
+
+8) /app/api/src/app/identityAccessManagement/JsonWebToken.php:26    [M] PregMatchRemoveDollar
+
+@@ @@
+     }
+     private static function ensureTokenIsJwtValid(string $token): void
+     {
+-        if (!preg_match("/^([a-zA-Z0-9_=]{4,36})\\.([a-zA-Z0-9_=]{4,})\\.([a-zA-Z0-9_\\-+\\/=]{4,86})\$/", $token)) {
++        if (!preg_match("/^([a-zA-Z0-9_=]{4,36})\\.([a-zA-Z0-9_=]{4,})\\.([a-zA-Z0-9_\\-+\\/=]{4,86})/", $token)) {
+             throw new InvalidArgumentException('Token has no valid format');
+         }
+     }
+
+
+9) /app/api/src/app/identityAccessManagement/JwtManagement.php:92    [M] Concat
+
+@@ @@
+         } catch (Throwable $throwable) {
+             $this->logger->error($throwable);
+             return match (true) {
+-                $throwable instanceof ExpiredException => throw new RuntimeException('Token expired: ' . $throwable->getMessage()),
++                $throwable instanceof ExpiredException => throw new RuntimeException($throwable->getMessage() . 'Token expired: '),
+                 $throwable instanceof SignatureInvalidException => throw new RuntimeException('Invalid token signature: ' . $throwable->getMessage()),
+                 $throwable instanceof BeforeValidException => throw new RuntimeException('Token not valid yet: ' . $throwable->getMessage()),
+                 default => throw new RuntimeException('Invalid token: ' . $throwable->getMessage()),
+
+
+10) /app/api/src/app/identityAccessManagement/JwtManagement.php:92    [M] ConcatOperandRemoval
+
+@@ @@
+         } catch (Throwable $throwable) {
+             $this->logger->error($throwable);
+             return match (true) {
+-                $throwable instanceof ExpiredException => throw new RuntimeException('Token expired: ' . $throwable->getMessage()),
++                $throwable instanceof ExpiredException => throw new RuntimeException('Token expired: '),
+                 $throwable instanceof SignatureInvalidException => throw new RuntimeException('Invalid token signature: ' . $throwable->getMessage()),
+                 $throwable instanceof BeforeValidException => throw new RuntimeException('Token not valid yet: ' . $throwable->getMessage()),
+                 default => throw new RuntimeException('Invalid token: ' . $throwable->getMessage()),
+
+
+11) /app/api/src/app/identityAccessManagement/JwtManagement.php:95    [M] Concat
+
+@@ @@
+             $this->logger->error($throwable);
+             return match (true) {
+                 $throwable instanceof ExpiredException => throw new RuntimeException('Token expired: ' . $throwable->getMessage()),
+-                $throwable instanceof SignatureInvalidException => throw new RuntimeException('Invalid token signature: ' . $throwable->getMessage()),
++                $throwable instanceof SignatureInvalidException => throw new RuntimeException($throwable->getMessage() . 'Invalid token signature: '),
+                 $throwable instanceof BeforeValidException => throw new RuntimeException('Token not valid yet: ' . $throwable->getMessage()),
+                 default => throw new RuntimeException('Invalid token: ' . $throwable->getMessage()),
+             };
+
+
+12) /app/api/src/app/identityAccessManagement/JwtManagement.php:95    [M] ConcatOperandRemoval
+
+@@ @@
+             $this->logger->error($throwable);
+             return match (true) {
+                 $throwable instanceof ExpiredException => throw new RuntimeException('Token expired: ' . $throwable->getMessage()),
+-                $throwable instanceof SignatureInvalidException => throw new RuntimeException('Invalid token signature: ' . $throwable->getMessage()),
++                $throwable instanceof SignatureInvalidException => throw new RuntimeException('Invalid token signature: '),
+                 $throwable instanceof BeforeValidException => throw new RuntimeException('Token not valid yet: ' . $throwable->getMessage()),
+                 default => throw new RuntimeException('Invalid token: ' . $throwable->getMessage()),
+             };
+
+
+13) /app/api/src/app/identityAccessManagement/JwtManagement.php:98    [M] Concat
+
+@@ @@
+             return match (true) {
+                 $throwable instanceof ExpiredException => throw new RuntimeException('Token expired: ' . $throwable->getMessage()),
+                 $throwable instanceof SignatureInvalidException => throw new RuntimeException('Invalid token signature: ' . $throwable->getMessage()),
+-                $throwable instanceof BeforeValidException => throw new RuntimeException('Token not valid yet: ' . $throwable->getMessage()),
++                $throwable instanceof BeforeValidException => throw new RuntimeException($throwable->getMessage() . 'Token not valid yet: '),
+                 default => throw new RuntimeException('Invalid token: ' . $throwable->getMessage()),
+             };
+         }
+
+
+14) /app/api/src/app/identityAccessManagement/JwtManagement.php:98    [M] ConcatOperandRemoval
+
+@@ @@
+             return match (true) {
+                 $throwable instanceof ExpiredException => throw new RuntimeException('Token expired: ' . $throwable->getMessage()),
+                 $throwable instanceof SignatureInvalidException => throw new RuntimeException('Invalid token signature: ' . $throwable->getMessage()),
+-                $throwable instanceof BeforeValidException => throw new RuntimeException('Token not valid yet: ' . $throwable->getMessage()),
++                $throwable instanceof BeforeValidException => throw new RuntimeException('Token not valid yet: '),
+                 default => throw new RuntimeException('Invalid token: ' . $throwable->getMessage()),
+             };
+         }
+
+
+15) /app/api/src/app/identityAccessManagement/JwtManagement.php:101    [M] Concat
+
+@@ @@
+                 $throwable instanceof ExpiredException => throw new RuntimeException('Token expired: ' . $throwable->getMessage()),
+                 $throwable instanceof SignatureInvalidException => throw new RuntimeException('Invalid token signature: ' . $throwable->getMessage()),
+                 $throwable instanceof BeforeValidException => throw new RuntimeException('Token not valid yet: ' . $throwable->getMessage()),
+-                default => throw new RuntimeException('Invalid token: ' . $throwable->getMessage()),
++                default => throw new RuntimeException($throwable->getMessage() . 'Invalid token: '),
+             };
+         }
+     }
+
+
+16) /app/api/src/app/identityAccessManagement/JwtManagement.php:101    [M] ConcatOperandRemoval
+
+@@ @@
+                 $throwable instanceof ExpiredException => throw new RuntimeException('Token expired: ' . $throwable->getMessage()),
+                 $throwable instanceof SignatureInvalidException => throw new RuntimeException('Invalid token signature: ' . $throwable->getMessage()),
+                 $throwable instanceof BeforeValidException => throw new RuntimeException('Token not valid yet: ' . $throwable->getMessage()),
+-                default => throw new RuntimeException('Invalid token: ' . $throwable->getMessage()),
++                default => throw new RuntimeException('Invalid token: '),
+             };
+         }
+     }
+
+
+Timed Out mutants:
+==================
+
+Skipped mutants:
+================

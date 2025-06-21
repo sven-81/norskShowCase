@@ -1,0 +1,607 @@
+/******************************
+     Fonts
+*******************************/
+@font-face {
+    font-family: "Signika Negative";
+    src: url("/fonts/Signika_Negative/SignikaNegative-VariableFont_wght.ttf") format("truetype");
+    font-weight: normal;
+    font-style: normal;
+}
+
+/******************************
+General Settings
+*******************************/
+*,
+::before,
+::after {
+    box-sizing: border-box;
+}
+
+html {
+    /*do not scale text in iphone*/
+    -webkit-text-size-adjust: none;
+    height: 100%;
+}
+
+body {
+    margin: 0;
+    font-family: "Signika Negative", sans-serif;
+    text-decoration: none;
+    color: #1d2b39;
+    hyphens: auto;
+    background: #4986b6;
+    box-sizing: border-box;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    font-size: 1rem;
+}
+
+button,
+input,
+select[multiple],
+textarea {
+    background-image: none;
+    font-family: "Signika Negative", sans-serif;
+    letter-spacing: 0.025rem;
+}
+
+/******************************
+Basic Layout
+*******************************/
+
+.wrapper {
+    flex: 1 0 auto;
+    width: 90%;
+    max-width: 80rem;
+    padding: 2rem 0 0;
+    margin: 0 auto 9rem;
+}
+
+footer {
+    bottom: 0;
+    right: 0;
+    position: fixed;
+    flex-shrink: 0;
+    background: #98b0b5;
+    margin: 3rem 0 0;
+    padding: 2rem;
+    text-align: left;
+}
+
+#word-to-train {
+    font-size: 1.5rem;
+    font-weight: bold;
+    text-align: center;
+    padding: 1rem;
+    margin: 1.5rem 0;
+    border: 1px solid #ccc;
+}
+
+/******************************
+     Typo
+*******************************/
+a {
+    text-decoration: none;
+    color: #1d2b39;
+}
+
+a:visited {
+    color: #1d2b39;
+}
+
+footer a,
+.footnote a {
+    color: #009dcc;
+    padding: 0.5rem 0.75rem;
+}
+
+footer p {
+    margin: 0;
+    padding: 0;
+}
+
+footer .small {
+    color: #7a8a92;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.65rem;
+}
+
+em {
+    font-weight: 600;
+    font-style: normal;
+}
+
+p.home, p.imprint {
+    font-size: 1.25rem;
+    font-weight: lighter;
+    width: 50%;
+}
+
+/******************************
+      Buttons
+*******************************/
+.button, button {
+    display: inline-block;
+    padding: 0.5rem 1rem;
+    margin-bottom: 0;
+    margin-right: 2rem;
+    margin-top: 1rem;
+    font-weight: normal;
+    font-size: 1.25rem;
+    line-height: 120%;
+    text-align: center;
+    white-space: nowrap;
+    vertical-align: middle;
+    cursor: pointer;
+    border: 1px solid #7a8a92;
+    border-radius: 0.25rem;
+    user-select: none;
+    min-width: 10rem;
+    color: #98b0b5;
+}
+
+.button-primary:hover,
+.button-primary:focus,
+.button-primary:active,
+.button-primary.active {
+    color: #fff;
+    background-color: #1c735e;
+    border-color: #0b4037;
+}
+
+.button:hover,
+.button:focus {
+    color: #fff;
+    text-decoration: none;
+}
+
+.button-primary {
+    color: #fff;
+    background-color: #26ae90;
+    border-color: #156856;
+}
+
+.button-action {
+    font-size: 1.25rem;
+    padding: 0.5rem 1.5rem;
+    letter-spacing: 0.05rem;
+    margin: 1rem 0;
+}
+
+.button-secondary {
+    background: #4986b6;
+    border-color: #fff;
+}
+
+a.button-secondary a,
+a.button-secondary:visited,
+a.button-secondary:focus,
+a.button-secondary:hover {
+    color: #fff;
+}
+
+a.button-secondary:focus,
+a.button-secondary:hover {
+    background: #2d5674;
+}
+
+/******************************
+      Logo
+*******************************/
+.norway-flag {
+    width: 6rem;
+    float: left;
+}
+
+/******************************
+      SpecialChar Box
+*******************************/
+#specialChars {
+    border: 1px solid #ccc;
+    padding: 1.5rem;
+    margin: 2rem 0;
+    font-style: normal;
+    font-weight: normal;
+    line-height: 1;
+}
+
+#specialChars .grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    text-align: center;
+}
+
+.specialChar {
+    display: block;
+    padding: 0.25rem 1rem;
+    border: 1px solid #ccc;
+    margin: 1rem;
+}
+
+/******************************
+      Form
+*******************************/
+
+#content form,
+.form-control {
+    z-index: 1;
+}
+
+label {
+    display: inline-block;
+    margin-bottom: 0.25rem;
+    font-weight: bold;
+}
+
+.form-control {
+    display: block;
+    width: 100%;
+    height: 2.125rem;
+    padding: 0.5rem;
+    margin-bottom: 1rem;
+    font-size: 1.125rem;
+    line-height: 120%;
+    color: #555;
+    vertical-align: middle;
+    background-color: #fff;
+    border: 1px solid #ccc;
+    border-radius: 0.25rem;
+    box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075);
+    transition: border-color ease-in-out 0.15s,
+    box-shadow ease-in-out 0.15s;
+}
+
+.form-horizontal .control-label,
+.form-horizontal .radio,
+.form-horizontal .checkbox,
+.form-horizontal .radio-inline,
+.form-horizontal .checkbox-inline {
+    padding-top: 0.5rem;
+    margin-top: 0;
+    margin-bottom: 0;
+}
+
+.form-horizontal .form-group {
+    margin-right: -1rem;
+    margin-left: -1rem;
+}
+
+.form-group {
+    margin-bottom: 1rem;
+}
+
+.invalid-feedback {
+    color: #7d1212;
+    background: rgba(255, 255, 255, .5);
+    text-align: center;
+}
+
+/******************************
+      Alert
+*******************************/
+
+.alert-danger, .text-danger {
+    margin-top: 2rem;
+    color: #7d1212;
+    background: rgba(255, 255, 255, .5);
+    border: 1px solid #7d1212;
+    padding: 1rem 2rem 0.5rem;
+    display: inline-flex;
+}
+
+.text-danger {
+    width: 100%;
+    text-align: center;
+    display: inline-block;
+}
+
+.alert-success {
+    margin-top: 2rem;
+    color: #1c735e;
+    background: rgba(255, 255, 255, .5);
+    border: 1px solid #1c735e;
+    padding: 1rem 2rem 0.5rem;
+    display: inline-flex;
+}
+
+.alert button {
+    display: flex;
+    margin-top: 0;
+    width: auto;
+    height: 100%;
+    min-width: 3rem;
+}
+
+.alert-danger p {
+    padding: 0;
+}
+
+/******************************
+      Spinner
+*******************************/
+
+.spinner {
+    border: 0.5rem solid rgba(0, 0, 0, 0.1);
+    border-top: 0.5rem solid #00c5ff;
+    border-radius: 50%;
+    width: 3rem;
+    height: 3rem;
+    animation: spin 1s linear infinite;
+    margin: 2rem auto auto;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/******************************
+      Columns
+*******************************/
+.col-md-4, .col-md-5 {
+    width: 100%;
+}
+
+.col-md-4,
+.col-md-5 {
+    position: relative;
+    min-height: 1px;
+    padding-right: 1rem;
+    padding-left: 1rem;
+}
+
+/******************************
+    Result Boxes
+*******************************/
+
+#correct {
+    background: #26ae90;
+    color: #fff;
+    font-weight: 600;
+    text-align: center;
+    padding: 1.5rem;
+    font-size: 1.25rem;
+    letter-spacing: 0.075rem;
+}
+
+#mistake {
+    border: solid 1px #b11751;
+    background: #fff;
+    color: #b11751;
+    padding: 0 1.5rem;
+    font-size: 1rem;
+    letter-spacing: 0.075rem;
+}
+
+#mistake ul {
+    list-style: none;
+    padding: 0 0.5rem;
+    display: inline-flex;
+    align-items: center;
+    height: 100%;
+}
+
+#mistake li:nth-child(even) {
+    border-bottom: solid 1px #b11751;
+    padding-bottom: 0.5rem;
+    color: #5cbd00;
+}
+
+#mistake li:nth-child(odd) {
+    padding-top: 0.25rem;
+}
+
+#mistake > ul:nth-child(1) > div:nth-child(1) {
+    display: inline-flex;
+    font-size: 1.5rem;
+    margin-right: 3rem;
+    height: 100%;
+    justify-content: center;
+
+}
+
+#mistake > ul:nth-child(1) > div:nth-child(2) {
+    display: inline-flex;
+    font-size: 1.25rem;
+    line-height: 130%;
+}
+
+#mistake td, #mistake th {
+    background: #e2eeff;
+    padding: 0.25rem 1rem;
+}
+
+.message {
+    padding: 1rem;
+    transition: top 200ms cubic-bezier(0.17, 0.04, 0.03, 0.94);
+    box-sizing: border-box;
+    color: #7d123c;
+    text-align: center;
+}
+
+.container {
+    transition: margin 200ms cubic-bezier(0.17, 0.04, 0.03, 0.94);
+}
+
+/******************************
+    Manager
+*******************************/
+
+.add-word, #filter-words, #edit-words, .add-verb, #filter-verbs {
+    margin-bottom: 3rem;
+}
+
+.add-word, #filter-words, .add-verb {
+    display: grid;
+    grid-auto-flow: row;
+    grid-template-columns: 1fr;
+    gap: 2rem;
+    justify-content: space-between;
+}
+
+.add-verb {
+    gap: 1rem;
+}
+
+#edit-words .table {
+    display: grid;
+    grid-auto-flow: row;
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+    justify-content: space-between;
+}
+
+#edit-words .header-id, #edit-words .header {
+    text-align: center;
+}
+
+#edit-words .cell {
+    text-align: left;
+}
+
+.buttons {
+    display: grid;
+    grid-template-columns: 0.5fr 0.5fr;
+    gap: 1.5rem;
+    margin-bottom: 2.5rem;
+}
+
+#edit-words .buttons .cell button,
+#edit-verbs .buttons .cell button,
+.buttons .cell .button-delete {
+    min-width: 100%;
+    display: inline-block;
+    margin: 0;
+    text-align: center;
+}
+
+#edit-words .cell:nth-child(odd) input {
+    background-color: #dee8f6;
+}
+
+div.cell label.header-id {
+    display: inline;
+    padding-right: 1rem;
+    margin-bottom: 1rem;
+}
+
+#edit-verbs .cell:nth-child(odd) input {
+    background-color: #dee8f6;
+}
+
+.add-word .button-primary,
+#filter-words button,
+#edit-words .button-delete,
+.add-verb .button-primary,
+#edit-verbs .button-delete {
+    margin-right: 0;
+    margin-top: -0.25rem;
+    width: 100%;
+}
+
+#edit-verbs .button-delete {
+    margin-bottom: 3rem;
+    margin-top: 0.5rem;
+}
+
+#filter-words button {
+    margin-top: -0.75rem;
+}
+
+/******************************
+      Responsive Settings
+*******************************/
+@media screen and (min-width: 37.5em) {
+    .wrapper {
+        width: 75%;
+    }
+
+}
+
+@media screen and (min-width: 45rem) {
+    .wrapper {
+        width: 90%;
+    }
+
+    .col-md-4 {
+        width: 20%;
+    }
+
+    .col-md-5 {
+        width: 80%;
+    }
+
+    .col-md-4,
+    .col-md-5 {
+        float: left;
+    }
+
+    .container {
+        padding: 0 7rem;
+    }
+
+    .form-horizontal .control-label {
+        text-align: right;
+    }
+
+    .add-word, #filter-words {
+        display: grid;
+        grid-auto-flow: row;
+        grid-template-columns: 4fr 4fr 1fr;
+        gap: 2rem;
+        justify-content: space-between;
+    }
+
+    .add-verb {
+        display: grid;
+        grid-auto-flow: row;
+        grid-template-columns: 4fr 4fr 4fr;
+        grid-column-gap: 2rem;
+        grid-row-gap: 1rem;
+        justify-content: space-between;
+    }
+
+    #edit-words .table {
+        display: grid;
+        grid-auto-flow: row;
+        grid-template-columns: 0.125fr 3fr 3fr 1fr;
+        gap: 1.5rem;
+        justify-content: space-between;
+    }
+
+    div.cell label.header-id {
+        display: block;
+        padding: 0;
+        margin: 0;
+    }
+}
+
+@media screen and (min-width: 62.5rem) {
+    #specialChars .grid {
+        grid-template-columns: repeat(6, 1fr);
+        gap: 2rem;
+    }
+
+    .col-md-4 {
+        width: 33.33333333333333%;
+    }
+
+    .col-md-5 {
+        width: 41.66666666666667%;
+    }
+
+    #edit-verbs .table {
+        display: grid;
+        grid-auto-flow: row;
+        grid-template-columns: 0.25fr 3fr 3fr 3fr 3fr 3fr 2fr;
+        gap: 1.5rem;
+        justify-content: space-between;
+    }
+
+    #edit-verbs .buttons {
+        margin-top: 1.25rem;
+        margin-bottom: 0;
+    }
+}

@@ -1,0 +1,30 @@
+{
+  "timeout": 25,
+  "source": {
+    "directories": [
+      "api/src"
+    ],
+    excludes: [
+      "api/vendor"
+    ]
+  },
+  "logs": {
+    "text": "log/mutations/infection.log",
+    "html": "log/mutations/infection.html",
+    "summary": "log/mutations/summary.log",
+    "json": "log/mutations/infection-log.json",
+    "perMutator": "mutations/log/per-mutator.md",
+    "summaryJson": "mutations/log/summary.json"
+  },
+  "tmpDir": "/opt/tmp-folder",
+  "phpUnit": {
+    "configDir": "./",
+    "customPath": "/app/api/vendor/bin/phpunit"
+  },
+  "mutators": {
+    "global-ignoreSourceCodeByRegex": [
+      "Assert::.*"
+    ],
+    "@default": true
+  }
+}

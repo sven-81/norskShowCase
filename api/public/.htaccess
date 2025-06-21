@@ -1,0 +1,18 @@
+#ErrorPages
+ErrorDocument 401 /errorfiles/401.html
+ErrorDocument 403 /errorfiles/403.html
+ErrorDocument 404 /errorfiles/404.php
+ErrorDocument 500 /errorfiles/500.php
+
+DirectoryIndex index.php
+RewriteEngine on
+RewriteBase /
+
+# Deliver the folder or file directly if it exists on the server
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^ index.php [QSA,L]
+
+RewriteRule 404$ /errorfiles/404.php [NC,L]
+RewriteRule 500$ /errorfiles/500.php [NC,L]
+

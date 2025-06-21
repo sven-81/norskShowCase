@@ -1,0 +1,493 @@
+openapi: 3.1.0
+info:
+  title: NorskApi
+  description: NorskApi for learning norsk
+  version: 1.0.0
+  contact:
+    email: my@mail.de
+servers:
+  - url: 'https://myDomain.de/api/v1'
+tags:
+  - name: user
+    description: Operations about user
+  - name: norsk-trainer
+    description: learn norsk
+  - name: norsk-manager
+    description: manager norsk words to learn
+paths:
+  /user/new:
+    post:
+      tags:
+        - user
+      summary: register new user
+      description: register new user
+      requestBody:
+        description: registering a new user
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/user'
+      responses:
+        '201':
+          description: "new user registered successfully"
+        '400':
+          description: "Bad request: parameter missing"
+        '409':
+          description: "Conflict: user already exists"
+        '500':
+          description: "server error"
+  /user:
+    post:
+      tags:
+        - user
+      summary: login user
+      description: login user
+      requestBody:
+        description: log active user in
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/loginUser'
+      responses:
+        '200':
+          description: user logged in successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/loggedUser'
+        '400':
+          description: "Bad request: Missing required parameter"
+        '401':
+          description: "Unauthorized: Cannot verify credentials"
+        '403':
+          description: "Forbidden: user is not active"
+        '500':
+          description: "server error"
+
+  /train/words:
+    get:
+      tags:
+        - norsk-trainer
+      summary: get the next Word to train
+      description: get the next Word to train
+      operationId: getWordToTrain
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/wordFamilyWithId'
+        '400':
+          description: "Bad request: Missing required parameter"
+        '401':
+          description: "Unauthorized: Cannot verify credentials"
+        '403':
+          description: "Forbidden: user is not active"
+        '500':
+          description: "server error"
+      security:
+        - norsktrainer_auth:
+            - write:norsk
+            - read:norsk
+
+  /train/words/{wordId}:
+    patch:
+      tags:
+        - norsk-trainer
+      summary: updates success of trained word by id
+      description: updates success of trained word by id
+      operationId: wordId
+      parameters:
+        - name: wordId
+          in: path
+          description: Id of trained word to persist training success
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '204':
+          description: successful operation
+        '400':
+          description: "Bad request: Id has to be numeric"
+        '401':
+          description: "Unauthorized: Cannot verify credentials"
+        '403':
+          description: "Forbidden: user is not active"
+        '404':
+          description: "No record found in database for wordId"
+        '500':
+          description: "server error"
+
+  /train/verbs:
+    get:
+      tags:
+        - norsk-trainer
+      summary: get the next verb to train
+      description: get the next verb to train
+      operationId: getVerbToTrain
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/verbFamilyWithId'
+        '400':
+          description: "Bad request: Missing required parameter"
+        '401':
+          description: "Unauthorized: Cannot verify credentials"
+        '403':
+          description: "Forbidden: user is not active"
+        '500':
+          description: "server error"
+      security:
+        - norsktrainer_auth:
+            - write:norsk
+            - read:norsk
+
+  /train/verbs/{verbId}:
+    patch:
+      tags:
+        - norsk-trainer
+      summary: updates success of trained verb by id
+      description: updates success of trained verb by id
+      operationId: verbId
+      parameters:
+        - name: verbId
+          in: path
+          description: Id of trained verb to persist training success
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '204':
+          description: successful operation
+        '400':
+          description: "Bad request: Id has to be numeric"
+        '401':
+          description: "Unauthorized: Cannot verify credentials"
+        '403':
+          description: "Forbidden: user is not active"
+        '404':
+          description: "No record found in database for wordId"
+        '500':
+          description: "server error"
+
+  /manage/words:
+    get:
+      tags:
+        - norsk-manager
+      summary: get all words
+      description: get all words for search or listing
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/wordFamilyWithId'
+        '401':
+          description: "Unauthorized: Cannot verify credentials"
+        '403':
+          description: "Forbidden: user is not active"
+        '500':
+          description: "server error"
+    post:
+      tags:
+        - norsk-manager
+      summary: add new words
+      description: add new words in the manager for training
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/wordFamily'
+      responses:
+        '201':
+          description: successful operation
+        '401':
+          description: "Unauthorized: Cannot verify credentials"
+        '403':
+          description: "Forbidden: user is not active"
+        '409':
+          description: "Word already exists"
+        '500':
+          description: "server error"
+
+  /manage/words/{wordId}:
+    put:
+      tags:
+        - norsk-manager
+      summary: save edited word in the manager by id
+      description: save edited word in the manager by id
+      operationId: wordId
+      parameters:
+        - name: wordId
+          in: path
+          description: Id of word to save edited changed
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/wordFamily'
+      responses:
+        '204':
+          description: successful operation
+        '400':
+          description: Invalid wordId supplied
+        '401':
+          description: "Unauthorized: Cannot verify credentials"
+        '403':
+          description: "Forbidden: user is not active"
+        '404':
+          description: "No record found in database for id"
+        '409':
+          description: "Word already exists"
+        '500':
+          description: "server error"
+    delete:
+      tags:
+        - norsk-manager
+      summary: removes word from the manager by id
+      description: removes word from the manager by id
+      operationId: wordId
+      parameters:
+        - name: wordId
+          in: path
+          description: Id of word to delete
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                message:
+                  type: string
+        '400':
+          description: Invalid wordId supplied
+        '401':
+          description: "Unauthorized: Cannot verify credentials"
+        '403':
+          description: "Forbidden: user is not active"
+        '404':
+          description: wordId not found
+        '500':
+          description: "server error"
+
+  /manage/verbs:
+    get:
+      tags:
+        - norsk-manager
+      summary: get all verbs
+      description: get all verbs for search or listing
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/verbFamilyWithId'
+        '401':
+          description: "Unauthorized: Cannot verify credentials"
+        '403':
+          description: "Forbidden: user is not active"
+        '500':
+          description: "Server error"
+    post:
+      tags:
+        - norsk-manager
+      summary: add new verbs
+      description: add new verbs in the manager for training
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/verbFamily'
+      responses:
+        '201':
+          description: successful operation
+        '401':
+          description: "Unauthorized: Cannot verify credentials"
+        '403':
+          description: "Forbidden: user is not active"
+        '409':
+          description: "Verb already exists"
+        '500':
+          description: "server error"
+
+  /manage/verbs/{verbId}:
+    put:
+      tags:
+        - norsk-manager
+      summary: save edited verb in the manager by id
+      description: save edited verb in the manager by id
+      operationId: verbId
+      parameters:
+        - name: verbId
+          in: path
+          description: Id of verb to save edited changed
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/verbFamily'
+      responses:
+        '204':
+          description: successful operation
+        '400':
+          description: Invalid verbId supplied
+        '401':
+          description: "Unauthorized: Cannot verify credentials"
+        '403':
+          description: "Forbidden: user is not active"
+        '404':
+          description: "No record found in database for id"
+        '409':
+          description: "Verb already exists"
+        '500':
+          description: "Server error"
+    delete:
+      tags:
+        - norsk-manager
+      summary: removes verb from the manager by id
+      description: removes verb from the manager by id
+      operationId: verbId
+      parameters:
+        - name: verbId
+          in: path
+          description: Id of verb to delete
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                message:
+                  type: string
+        '400':
+          description: Invalid wordId supplied
+        '401':
+          description: "Unauthorized: Cannot verify credentials"
+        '403':
+          description: "Forbidden: user is not active"
+        '404':
+          description: verbId not found
+        '500':
+          description: "server error"
+
+components:
+  schemas:
+    user:
+      type: object
+      properties:
+        username:
+          $ref: '#/components/schemas/username'
+        firstName:
+          $ref: '#/components/schemas/firstName'
+        lastName:
+          $ref: '#/components/schemas/lastName'
+        password:
+          $ref: '#/components/schemas/password'
+    loginUser:
+      type: object
+      properties:
+        username:
+          $ref: '#/components/schemas/username'
+        password:
+          $ref: '#/components/schemas/password'
+    loggedUser:
+      type: object
+      properties:
+        login:
+          type: boolean
+          example: true
+        username:
+          $ref: '#/components/schemas/username'
+        firstName:
+          $ref: '#/components/schemas/firstName'
+        lastName:
+          $ref: '#/components/schemas/lastName'
+        token:
+          type: string
+          example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTYiLCJ1c2VybmFtZSI6ImpvaG5kb2UiLCJyb2xlIjoiYWRtaW4iLCJpYXQiOjE2ODAwMDAwMDB9.fake-signature-placeholder"
+    firstName:
+      type: string
+      example: Karl-Klaus
+    lastName:
+      type: string
+      example: Tausch-Rausch
+    username:
+      type: string
+      example: KlausiMausi
+    password:
+      type: string
+      example: myVerySecretlySecret
+      description: has to be longer than 12 chars
+    wordFamilyWithId:
+      allOf:
+        - type: object
+          properties:
+            id:
+              $ref: '#/components/schemas/id'
+        - $ref: '#/components/schemas/wordFamily'
+    verbFamilyWithId:
+      allOf:
+        - type: object
+          properties:
+            id:
+              $ref: '#/components/schemas/id'
+        - $ref: '#/components/schemas/verbFamily'
+    wordFamily:
+      type: object
+      properties:
+        norsk:
+          $ref: '#/components/schemas/word'
+        german:
+          $ref: '#/components/schemas/german'
+    verbFamily:
+      type: object
+      properties:
+        norsk:
+          $ref: '#/components/schemas/word'
+        norskPresent:
+          $ref: '#/components/schemas/word'
+        norskPast:
+          $ref: '#/components/schemas/word'
+        norskPastPerfect:
+          $ref: '#/components/schemas/word'
+        german:
+          $ref: '#/components/schemas/german'
+    id:
+      type: integer
+      example: 123
+    word:
+      type: string
+      example: someNorskWord
+    german:
+      type: string
+      example: someGermanWord

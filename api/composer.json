@@ -1,0 +1,68 @@
+{
+  "name": "duge/norsk",
+  "description": "Application to learn norsk.",
+  "authors": [
+    {
+      "name": "Sven Duge",
+      "email": "sven@duge.rocks",
+      "homepage": "https://duge.rocks",
+      "role": "Developer"
+    }
+  ],
+  "autoload": {
+    "psr-4": {
+      "norsk\\api\\": [
+        "src/"
+      ]
+    }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "norsk\\api\\helperTools\\": [
+        "tests/helperTools"
+      ],
+      "norsk\\api\\": [
+        "tests/system",
+        "tests/unit"
+      ],
+      "norsk\\api\\tests\\acceptance\\": [
+        "tests/acceptance"
+      ],
+      "norsk\\api\\tests\\stubs\\": "tests/stubs",
+      "norsk\\api\\tests\\provider\\": "tests/provider"
+    }
+  },
+  "require": {
+    "php": ">=8.3",
+    "ext-mysqli": "*",
+    "ext-mbstring": "*",
+    "ext-json": "*",
+    "psr/clock": "*",
+    "slim/slim": "*",
+    "composer/installers": "*",
+    "components/jquery": "*",
+    "firebase/php-jwt": "*",
+    "guzzlehttp/guzzle": "*",
+    "katzgrau/klogger": "*"
+  },
+  "require-dev": {
+    "roave/security-advisories": "dev-latest",
+    "phpunit/phpunit": "*",
+    "phpstan/phpstan": "*",
+    "phpstan/phpstan-phpunit": "*",
+    "povils/phpmnd": "*",
+    "behat/behat": "*",
+    "ext-xdebug": "*",
+    "phpmetrics/phpmetrics": "v3.0.0rc6",
+    "squizlabs/php_codesniffer": "*",
+    "rector/rector": "*",
+    "infection/infection": "*",
+    "ebln/guzzle-openapi-middleware": "*"
+  },
+  "config": {
+    "allow-plugins": {
+      "composer/installers": true,
+      "infection/extension-installer": true
+    }
+  }
+}

@@ -1,0 +1,9 @@
+parameters:
+  php_version: 80300
+  paths:
+    - 'api/src'
+    - 'api/tests'
+  sets:
+    - code-quality
+    - dead-code
+    - type-declaration

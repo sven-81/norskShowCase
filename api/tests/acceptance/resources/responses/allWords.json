@@ -1,0 +1,47 @@
+[
+  {
+    "id": 1,
+    "german": "Berg",
+    "norsk": "fjell"
+  },
+  {
+    "id": 2,
+    "german": "Herz",
+    "norsk": "hjerte"
+  },
+  {
+    "id": 3,
+    "german": "Schärenküste",
+    "norsk": "skjærgård"
+  },
+  {
+    "id": 4,
+    "german": "Silber",
+    "norsk": "sølv"
+  },
+  {
+    "id": 5,
+    "german": "Acker",
+    "norsk": "åker"
+  },
+  {
+    "id": 6,
+    "german": "Wellen",
+    "norsk": "bølger"
+  },
+  {
+    "id": 7,
+    "german": "Liebe",
+    "norsk": "kjærlighet"
+  },
+  {
+    "id": 8,
+    "german": "Stall",
+    "norsk": "fjøs"
+  },
+  {
+    "id": 9,
+    "german": "Nacht",
+    "norsk": "natt"
+  }
+]

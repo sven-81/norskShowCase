@@ -1,0 +1,13 @@
+*.xml     eol=lf
+*.txt     eol=lf
+*.csv     eol=lf
+*.php     eol=lf
+*.log     eol=lf
+*.sh      eol=lf
+
+*.html linguist-vendored
+*.htm linguist-vendored
+*.js linguist-vendored
+*.css linguist-vendored
+/client/node_modules linguist-vendored
+/tools/reports linguist-vendored

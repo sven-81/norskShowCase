@@ -1,0 +1,9 @@
+# Ignore model files that are auto-generated
+*/.scannerwork
+/.idea/
+/api/vendor/
+/api/configs/mySqlConfig.ini
+/tools/.phpunit.result.cache
+/tools/.phpunit.cache/
+/client/node_modules/
+/vite.log

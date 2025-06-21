@@ -1,0 +1,90 @@
+#general - dev, tests & debug
+name: norsk-dev
+
+services:
+  norsk-client:
+    container_name: norsk-client-dev
+    build:
+      context: ./client
+      dockerfile: ../docker/node.Dockerfile
+    ports:
+      - "8000:8000"
+    working_dir: /srv/app
+    volumes:
+      - ./client:/srv/app
+    networks:
+      - norsk-network
+    tty: true
+    command: sh
+
+  php8-norsk:
+    container_name: php8-norsk-dev
+    build:
+      context: .
+      dockerfile: docker/dev.Dockerfile
+    volumes:
+      - ./:/app
+    links:
+      - database-norsk
+    depends_on:
+      - database-norsk
+      - composer
+    environment:
+      XDEBUG_MODE: coverage,debug
+      XDEBUG_CLIENT_HOST: host.docker.internal
+      XDEBUG_LOG: /var/log
+      PHP_IDE_CONFIG: "serverName=php8-norsk"
+    networks:
+      - norsk-network
+    privileged: true
+
+  api:
+    #gets calls from postman, vue and phpUnit for testing; like prd-server settings
+    container_name: norsk-api-dev
+    restart: unless-stopped
+    build:
+      context: ./
+      dockerfile: docker/staging.api.Dockerfile
+    volumes:
+      - ./api/configs/mySqlConfig.test.ini:/var/www/html/norsk/api/configs/mySqlConfig.ini
+      - ./api/configs/appConfig.ini:/var/www/html/norsk/api/configs/appConfig.ini
+      - ./api/configs/entrypoint.sh:/var/www/html/norsk/api/configs/entrypoint.sh
+      - ./api/logs:/var/www/html/norsk/api/logs:rw
+      - ./api/public:/var/www/html/norsk/api/public:rw
+      - ./api/src:/var/www/html/norsk/api/src:rw
+      - ./api/vendor:/var/www/html/norsk/api/vendor
+    ports:
+      - "9999:80"
+    networks:
+      - norsk-network
+    privileged: true
+    links:
+      - database-norsk
+    depends_on:
+      - database-norsk
+
+  database-norsk:
+    container_name: database-norsk-dev
+    restart: unless-stopped
+    image: mariadb:10
+    volumes:
+      - ./database/tests:/var/lib/mysql
+    env_file:
+      - docker/config/database.dev.env
+    ports:
+      - "9915:3306"
+    networks:
+      - norsk-network
+
+  composer:
+    container_name: norsk-composer
+    image: composer:latest
+    command: [ "composer", "${CMD:-dump-autoload}", "--ignore-platform-reqs" ]
+    volumes:
+      - ./api:/app
+    networks:
+      - norsk-network
+
+networks:
+  norsk-network:
+    driver: bridge

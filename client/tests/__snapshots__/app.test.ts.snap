@@ -1,0 +1,35 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`App.vue > fits structure-snapshot 1`] = `
+"<div class="wrapper">
+  <header id="header" class="header">
+    <h1><a href="/"><img alt="Norwegen Fahne" class="norway-flag" src="/src/assets/images/norway.svg">NORSK</a></h1>
+    <h2>Norwegisch lernen</h2>
+  </header>
+  <nav class="menu">
+    <ol>
+      <li class=""><a href="">Trainer</a>
+        <ol class="sub-menu">
+          <li class=""><a href="/train/words">Wörter</a></li>
+          <li class=""><a href="/train/verbs">Verben</a></li>
+        </ol>
+      </li>
+      <!--v-if-->
+      <li class=""><a href="/login">Login</a></li>
+      <li class=""><a href="/register">Registrieren</a></li>
+      <li class=""><a href="/imprint">Impressum</a></li>
+    </ol>
+  </nav>
+  <!--v-if-->
+  <div id="content" class="column row">
+    <div>Dummy View</div>
+  </div>
+  <footer class="column">
+    <div class="row">
+      <div class="copyright icon-paw">
+        <p><a href="mailto:test@example.com" title="Mail an test@example.com">test@example.com</a><br><span class="small">flag: publicdomainvectors.org</span></p>
+      </div>
+    </div>
+  </footer>
+</div>"
+`;

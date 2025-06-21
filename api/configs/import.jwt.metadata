@@ -1,0 +1,11 @@
+jwt for client to import testdata on test-env
+
+{
+  "sub": "norsk app",
+  "aud": "Norsk Client",
+  "scope": "is:manager",
+  "nickname": "test",
+  "exp": 3655218009
+}
+
+QUJDREVGR0hJSktMTW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5
