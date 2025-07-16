@@ -10,28 +10,29 @@ use Behat\Hook\BeforeScenario;
 use Behat\Step\Given;
 use Behat\Step\Then;
 use Behat\Step\When;
-use DateTimeImmutable;
 use GuzzleHttp\Psr7\Response;
 use GuzzleHttp\Psr7\ServerRequest as Request;
 use InvalidArgumentException;
-use norsk\api\app\config\AppConfig;
-use norsk\api\app\config\DbConfig;
-use norsk\api\app\config\Path;
-use norsk\api\app\identityAccessManagement\Clock;
-use norsk\api\app\identityAccessManagement\JwtManagement;
-use norsk\api\app\logging\Logger;
-use norsk\api\app\persistence\DbConnection;
-use norsk\api\app\persistence\GenericSqlStatement;
-use norsk\api\app\persistence\MysqliWrapper;
-use norsk\api\app\persistence\Parameters;
-use norsk\api\app\persistence\TableName;
-use norsk\api\app\response\Url;
 use norsk\api\helperTools\Removable;
-use norsk\api\shared\Json;
+use norsk\api\infrastructure\config\AppConfig;
+use norsk\api\infrastructure\config\DbConfig;
+use norsk\api\infrastructure\config\Path;
+use norsk\api\infrastructure\logging\Logger;
+use norsk\api\infrastructure\persistence\DbConnection;
+use norsk\api\infrastructure\persistence\GenericSqlStatement;
+use norsk\api\infrastructure\persistence\MysqliWrapper;
+use norsk\api\infrastructure\persistence\Parameters;
+use norsk\api\infrastructure\persistence\TableName;
+use norsk\api\shared\application\Json;
+use norsk\api\shared\infrastructure\http\response\Url;
 use norsk\api\tests\provider\TestHeader;
+use norsk\api\tests\stubs\MutableTestClock;
 use norsk\api\tests\stubs\VirtualTestDatabase;
-use norsk\api\user\Login;
-use norsk\api\user\UsersReader;
+use norsk\api\user\infrastructure\identityAccessManagement\EnhancedClock;
+use norsk\api\user\infrastructure\identityAccessManagement\jwt\JwtManagement;
+use norsk\api\user\infrastructure\persistence\UsersReader;
+use norsk\api\user\infrastructure\UserManagementFactory;
+use norsk\api\user\infrastructure\web\controller\Login;
 use PHPUnit\Framework\Assert;
 use Psr\Http\Message\ResponseInterface;
 
@@ -84,12 +85,14 @@ class UserLoginDomainContext implements Context
         $this->logPath = $appConfig->getLogPath();
         $logger = Logger::create($this->logPath);
 
-        $pepper = $appConfig->getPepper();
-        $clock = new Clock(new DateTimeImmutable('now'));
-        $jwtManagement = new JwtManagement($appConfig, $clock, $logger, $usersReader);
+        $testClock = new MutableTestClock();
+        $enhancedClock = new EnhancedClock($testClock);
+        $jwtManagement = new JwtManagement($appConfig, $enhancedClock, $logger);
 
         $this->url = Url::by('http://foo');
-        $this->login = new Login($logger, $usersReader, $jwtManagement, $pepper, $this->url);
+
+        $context = new UserManagementFactory($logger, $database, $jwtManagement, $appConfig);
+        $this->login = $context->login();
     }
 
 
@@ -199,9 +202,9 @@ class UserLoginDomainContext implements Context
     public function iLoginWithTheUsername($someone): void
     {
         $body = '{"username": "' . $someone . '","password": "' . $this->password . '"}';
+        $bodyArray = Json::fromString($body)->asDecodedJson();
 
         $request = new Request($this->method, $this->uri, $this->requestHeaders);
-        $bodyArray = Json::fromString($body)->asDecodedJson();
         $requestWithParsedBody = $request->withParsedBody($bodyArray);
 
         $this->response = $this->login->run($requestWithParsedBody);
@@ -265,6 +268,8 @@ class UserLoginDomainContext implements Context
                 'username' => 'heinz',
                 'firstName' => 'Heinz',
                 'lastName' => 'Klaus',
+                'tokenType' => 'Bearer',
+                'expiresIn' => 7200,
             ],
             $jsonArray,
             ['token'],
@@ -355,8 +360,9 @@ class UserLoginDomainContext implements Context
             default => throw new InvalidArgumentException('parameter musst be username or password')
         };
 
-        $request = new Request($this->method, $this->uri, $this->requestHeaders);
         $bodyArray = Json::fromString($body)->asDecodedJson();
+
+        $request = new Request($this->method, $this->uri, $this->requestHeaders);
         $this->request = $request->withParsedBody($bodyArray);
     }
 

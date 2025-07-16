@@ -6,12 +6,12 @@ namespace norsk\api;
 
 use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Exception\ServerException;
-use norsk\api\app\config\DbConfig;
-use norsk\api\app\config\Path;
-use norsk\api\app\persistence\GenericSqlStatement;
-use norsk\api\app\persistence\TableName;
 use norsk\api\helperTools\Removable;
-use norsk\api\shared\Json;
+use norsk\api\infrastructure\config\DbConfig;
+use norsk\api\infrastructure\config\Path;
+use norsk\api\infrastructure\persistence\GenericSqlStatement;
+use norsk\api\infrastructure\persistence\TableName;
+use norsk\api\shared\application\Json;
 use norsk\api\tests\stubs\TestClient;
 use norsk\api\tests\stubs\VirtualTestDatabase;
 use PHPUnit\Framework\Attributes\CoversNothing;
@@ -71,7 +71,10 @@ class RegisterSystemTest extends TestCase
     {
         $this->expectException(ClientException::class);
         $this->expectExceptionCode(409);
-        $this->expectExceptionMessage('`409 Conflict` response:' . PHP_EOL . '{}');
+        $this->expectExceptionMessage(
+            '`409 Conflict` response:' . PHP_EOL .
+            '{"message":"Duplicate entry \'heinz\' for key \'PRIMARY\'"}'
+        );
 
         $sql = file_get_contents(__DIR__ . '/resources/queries/initialUsers.sql');
         $this->integrationDatabase->insertInitialEntryToAvoidFailing($sql);

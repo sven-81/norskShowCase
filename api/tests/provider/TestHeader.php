@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace norsk\api\tests\provider;
 
-use norsk\api\app\response\Url;
+use norsk\api\shared\infrastructure\http\response\Url;
 
 trait TestHeader
 {
@@ -14,7 +14,7 @@ trait TestHeader
             'Access-Control-Allow-Origin' => [
                 $url->asString(),
             ],
-            'Access-Control-Allow-Credentials' => [true],
+            'Access-Control-Allow-Credentials' => ['true'],
             'Access-Control-Allow-Methods' => ['POST, GET, DELETE, PUT, PATCH, OPTIONS'],
             'Access-Control-Allow-Headers' => ['Content-Type, Authorization, X-Requested-With, Version'],
             'Accept' => ['application/json'],
@@ -29,7 +29,7 @@ trait TestHeader
     {
         return [
             'Access-Control-Allow-Origin' => $url->asString(),
-            'Access-Control-Allow-Credentials' => true,
+            'Access-Control-Allow-Credentials' => 'true',
             'Access-Control-Allow-Methods' => 'POST, GET, DELETE, PUT, PATCH, OPTIONS',
             'Access-Control-Allow-Headers' => 'Content-Type, Authorization, X-Requested-With, Version',
             'Accept' => 'application/json',

@@ -6,6 +6,7 @@ parameters:
 
 	ignoreErrors:
 		- '#Call to static method PHPUnit\\Framework\\Assert::assertInstanceOf\(\) with .+ will always evaluate to true#'
+		- '#Call to method PHPUnit\\Framework\\Assert::assertInstanceOf\(\) with .+ will always evaluate to true#'
 	paths:
 		- ../api
 	excludePaths:

@@ -6,12 +6,12 @@ namespace norsk\api;
 
 use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Exception\ServerException;
-use norsk\api\app\config\DbConfig;
-use norsk\api\app\config\Path;
-use norsk\api\app\persistence\GenericSqlStatement;
-use norsk\api\app\persistence\TableName;
 use norsk\api\helperTools\Removable;
-use norsk\api\shared\Json;
+use norsk\api\infrastructure\config\DbConfig;
+use norsk\api\infrastructure\config\Path;
+use norsk\api\infrastructure\persistence\GenericSqlStatement;
+use norsk\api\infrastructure\persistence\TableName;
+use norsk\api\shared\application\Json;
 use norsk\api\tests\stubs\TestClient;
 use norsk\api\tests\stubs\VirtualTestDatabase;
 use PHPUnit\Framework\Attributes\CoversNothing;
@@ -125,14 +125,14 @@ class VerbManagerSystemTest extends TestCase
                 'GET',
                 self::GET_POST_VERBS,
                 null,
-                '{"message":"Unauthorized: Cannot verify credentials"}',
+                '{"message":"Unauthorized: No rights for managing words or verbs"}',
             ],
             'inactiveManager@viewing' => [
                 $tokenDir . 'peterInactiveManager.jwt',
                 'GET',
                 self::GET_POST_VERBS,
                 null,
-                '{"message":"Unauthorized: Cannot verify credentials"}',
+                '{"message":"Unauthorized: Current user is no active manager"}',
             ],
             'activeUser@creating' => [
                 $tokenDir . 'heinzActiveUser.jwt',
@@ -146,14 +146,14 @@ class VerbManagerSystemTest extends TestCase
                 'POST',
                 self::GET_POST_VERBS,
                 $body,
-                '{"message":"Unauthorized: Cannot verify credentials"}',
+                '{"message":"Unauthorized: No rights for managing words or verbs"}',
             ],
             'inactiveManager@creating' => [
                 $tokenDir . 'peterInactiveManager.jwt',
                 'POST',
                 self::GET_POST_VERBS,
                 $body,
-                '{"message":"Unauthorized: Cannot verify credentials"}',
+                '{"message":"Unauthorized: Current user is no active manager"}',
             ],
             'activeUser@editing' => [
                 $tokenDir . 'heinzActiveUser.jwt',
@@ -167,14 +167,14 @@ class VerbManagerSystemTest extends TestCase
                 'PUT',
                 self::CHANGE . '1',
                 $body,
-                '{"message":"Unauthorized: Cannot verify credentials"}',
+                '{"message":"Unauthorized: No rights for managing words or verbs"}',
             ],
             'inactiveManager@editing' => [
                 $tokenDir . 'peterInactiveManager.jwt',
                 'PUT',
                 self::CHANGE . '1',
                 $body,
-                '{"message":"Unauthorized: Cannot verify credentials"}',
+                '{"message":"Unauthorized: Current user is no active manager"}',
             ],
             'activeUser@deleting' => [
                 $tokenDir . 'heinzActiveUser.jwt',
@@ -188,14 +188,14 @@ class VerbManagerSystemTest extends TestCase
                 'DELETE',
                 self::CHANGE . '1',
                 null,
-                '{"message":"Unauthorized: Cannot verify credentials"}',
+                '{"message":"Unauthorized: No rights for managing words or verbs"}',
             ],
             'inactiveManager@deleting' => [
                 $tokenDir . 'peterInactiveManager.jwt',
                 'DELETE',
                 self::CHANGE . '1',
                 null,
-                '{"message":"Unauthorized: Cannot verify credentials"}',
+                '{"message":"Unauthorized: Current user is no active manager"}',
             ],
         ];
     }

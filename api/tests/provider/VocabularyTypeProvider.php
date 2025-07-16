@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace norsk\api\tests\provider;
 
-use norsk\api\shared\VocabularyType;
+use norsk\api\shared\domain\VocabularyType;
 
 class VocabularyTypeProvider
 {

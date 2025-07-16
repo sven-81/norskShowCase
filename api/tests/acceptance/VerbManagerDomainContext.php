@@ -12,23 +12,22 @@ use Behat\Step\Then;
 use Behat\Step\When;
 use GuzzleHttp\Psr7\Response;
 use GuzzleHttp\Psr7\ServerRequest as Request;
-use norsk\api\app\config\AppConfig;
-use norsk\api\app\config\DbConfig;
-use norsk\api\app\config\Path;
-use norsk\api\app\logging\Logger;
-use norsk\api\app\persistence\DbConnection;
-use norsk\api\app\persistence\GenericSqlStatement;
-use norsk\api\app\persistence\MysqliWrapper;
-use norsk\api\app\persistence\Parameters;
-use norsk\api\app\persistence\SqlResult;
-use norsk\api\app\persistence\TableName;
-use norsk\api\app\response\Url;
-use norsk\api\helperTools\RouteMockHelper;
 use norsk\api\helperTools\Removable;
-use norsk\api\manager\ManagerWriter;
-use norsk\api\manager\verbs\VerbManager;
-use norsk\api\manager\verbs\VerbReader;
-use norsk\api\shared\Json;
+use norsk\api\infrastructure\config\AppConfig;
+use norsk\api\infrastructure\config\DbConfig;
+use norsk\api\infrastructure\config\Path;
+use norsk\api\infrastructure\logging\Logger;
+use norsk\api\infrastructure\persistence\DbConnection;
+use norsk\api\infrastructure\persistence\GenericSqlStatement;
+use norsk\api\infrastructure\persistence\MysqliWrapper;
+use norsk\api\infrastructure\persistence\Parameters;
+use norsk\api\infrastructure\persistence\SqlResult;
+use norsk\api\infrastructure\persistence\TableName;
+use norsk\api\manager\infrastructure\ManagerFactory;
+use norsk\api\manager\infrastructure\web\controller\VerbManager;
+use norsk\api\shared\application\Json;
+use norsk\api\shared\infrastructure\http\response\Url;
+use norsk\api\tests\provider\JwtUserProvider;
 use norsk\api\tests\provider\TestHeader;
 use norsk\api\tests\stubs\VirtualTestDatabase;
 use PHPUnit\Framework\Assert;
@@ -82,13 +81,13 @@ class VerbManagerDomainContext implements Context
 
         $mysqli = new MysqliWrapper();
         $database = new DbConnection($mysqli, $this->dbConfig);
-        $verbReader = new VerbReader($database);
-        $verbWriter = new ManagerWriter($database);
         $this->logPath = $appConfig->getLogPath();
         $logger = Logger::create($this->logPath);
 
         $this->url = Url::by('http://foo');
-        $this->verbManager = new VerbManager($logger, $verbReader, $verbWriter, $this->url);
+
+        $context = new ManagerFactory($logger, $database, $appConfig);
+        $this->verbManager = $context->verbManager();
     }
 
 
@@ -187,16 +186,16 @@ class VerbManagerDomainContext implements Context
     }
 
 
-    #[When('I like to get a list of all verbs as :someone')]
-    public function iLikeToGetAListOfAllVerbsAs(): void
+    #[When(':someone likes to get a list of all verbs')]
+    public function someoneLikesToGetAListOfAllVerbs(string $name): void
     {
         $this->integrationDatabase->waitForDatabase();
-        $this->response = $this->verbManager->getAllVerbs();
+        $this->response = $this->verbManager->getAllVerbs(JwtUserProvider::getUser($name));
     }
 
 
-    #[Then('I should get a list of all verbs')]
-    public function iShouldGetAListOfAllVerbs(): void
+    #[Then(':someone should get a list of all verbs')]
+    public function someoneShouldGetAListOfAllVerbs(): void
     {
         $expectedResponseFile = __DIR__ . '/resources/responses/allVerbs.json';
         $expectedResponseBody = file_get_contents($expectedResponseFile);
@@ -246,8 +245,8 @@ class VerbManagerDomainContext implements Context
     }
 
 
-    #[Then('heinz should get an error :number :message')]
-    public function heinzShouldGetAnError(string $number, string $message): void
+    #[Then(':someone should get an error :number :message')]
+    public function someoneShouldGetAnError(string $name, string $number, string $message): void
     {
         $expectedResponse = new Response(
             (int)$number,
@@ -266,26 +265,18 @@ class VerbManagerDomainContext implements Context
     }
 
 
-    #[When('I like to edit a :language verb with id :number')]
-    public function iLikeToEditAVerbAs(string $language, string $id): void
+    #[When(':someone likes to edit a :language verb with id :number')]
+    public function someoneLikesToEditAVerbAs(string $name, string $language, string $id): void
     {
-        $request = new Request($this->putMethod, $this->uri, $this->requestHeaders);
-        $parserMock = RouteMockHelper::createRouteParserMock();
-        $resultsMock = RouteMockHelper::createRoutingResultsMock();
-        $routeMock = RouteMockHelper::createRouteMock();
-        $routeMock->method('getArgument')
-            ->willReturn($id);
-
-        $request = $request->withAttribute('__routeParser__', $parserMock);
-        $request = $request->withAttribute('__routingResults__', $resultsMock);
-        $request = $request->withAttribute('__route__', $routeMock);
-
         $body = $this->getEditedLanguageBody($language);
-
         $bodyArray = Json::fromString($body)->asDecodedJson();
-        $this->request = $request->withParsedBody($bodyArray);
 
-        $this->response = $this->verbManager->update($this->request);
+        $request = new Request($this->putMethod, $this->uri, $this->requestHeaders);
+        $this->request = $request
+            ->withAttribute('id', $id)
+            ->withParsedBody($bodyArray);
+
+        $this->response = $this->verbManager->update(JwtUserProvider::getUser($name), $this->request);
     }
 
 
@@ -318,27 +309,18 @@ class VerbManagerDomainContext implements Context
     }
 
 
-    #[When('I like to edit a verb with id 3 with an already existing :language verb')]
-    public function iLikeToEditAVerbWithIdWithAnAlreadyExistingVerb(string $language): void
+    #[When(':someone likes to edit a verb with id 3 with an already existing :language verb')]
+    public function someoneLikesToEditAVerbWithIdWithAnAlreadyExistingVerb(string $name, string $language): void
     {
-        $request = new Request($this->putMethod, $this->uri, $this->requestHeaders);
-        $parserMock = RouteMockHelper::createRouteParserMock();
-        $resultsMock = RouteMockHelper::createRoutingResultsMock();
-        $routeMock = RouteMockHelper::createRouteMock();
-        $routeMock->method('getArgument')
-            ->willReturn('3');
-
-        $request = $request->withAttribute('__routeParser__', $parserMock);
-        $request = $request->withAttribute('__routingResults__', $resultsMock);
-        $request = $request->withAttribute('__route__', $routeMock);
-
         $body = $this->getCreatedLanguageBody($language);
-
         $bodyArray = Json::fromString($body)->asDecodedJson();
-        $this->request = $request->withParsedBody($bodyArray);
+
+        $request = new Request($this->putMethod, $this->uri, $this->requestHeaders);
+        $this->request = $request->withAttribute('id', '3')
+            ->withParsedBody($bodyArray);
         $this->integrationDatabase->waitForDatabase();
 
-        $this->response = $this->verbManager->update($this->request);
+        $this->response = $this->verbManager->update(JwtUserProvider::getUser($name), $this->request);
     }
 
 
@@ -442,22 +424,15 @@ class VerbManagerDomainContext implements Context
     }
 
 
-    #[When('I like to delete a verb with id :number')]
-    public function iLikeToDeleteAVerbWithId(string $id): void
+    #[When(':someone likes to delete a verb with id :number')]
+    public function someoneLikeToDeleteAVerbWithId(string $name, string $id): void
     {
         $request = new Request($this->putMethod, $this->uri, $this->requestHeaders);
-        $parserMock = RouteMockHelper::createRouteParserMock();
-        $resultsMock = RouteMockHelper::createRoutingResultsMock();
-        $routeMock = RouteMockHelper::createRouteMock();
-        $routeMock->method('getArgument')
-            ->willReturn($id);
+        $this->request = $request->withAttribute('id', $id);
 
-        $request = $request->withAttribute('__routeParser__', $parserMock);
-        $request = $request->withAttribute('__routingResults__', $resultsMock);
-        $this->request = $request->withAttribute('__route__', $routeMock);
         $this->integrationDatabase->waitForDatabase();
 
-        $this->response = $this->verbManager->delete($this->request);
+        $this->response = $this->verbManager->delete(JwtUserProvider::getUser($name), $this->request);
     }
 
 
@@ -476,8 +451,8 @@ class VerbManagerDomainContext implements Context
     }
 
 
-    #[Then('heinz should get a message :code :message')]
-    public function heinzShouldGetAMessage(string $code, string $message): void
+    #[Then(':someone should get a message :code :message')]
+    public function someoneShouldGetAMessage(string $code, string $message): void
     {
         $expectedResponse = new Response(
             (int)$code,
@@ -496,8 +471,8 @@ class VerbManagerDomainContext implements Context
     }
 
 
-    #[When('I like to add :state verb for :language')]
-    public function iLikeToAddVerbFor(string $state, string $language): void
+    #[When(':someone likes to add :state verb for :language')]
+    public function someoneLikeToAddVerbFor(string $name, string $state, string $language): void
     {
         if ($state === 'a new' && $language === 'german') {
             $this->body = '{"german":"neu","norsk":"spise","norskPresent":"spiser",'
@@ -516,18 +491,13 @@ class VerbManagerDomainContext implements Context
                           . '"norskPast":"løp","norskPastPerfect":"har løpt"}';
         }
 
-        $request = new Request($this->putMethod, $this->uri, $this->requestHeaders);
-        $parserMock = RouteMockHelper::createRouteParserMock();
-        $resultsMock = RouteMockHelper::createRoutingResultsMock();
-
-        $request = $request->withAttribute('__routeParser__', $parserMock);
-        $request = $request->withAttribute('__routingResults__', $resultsMock);
-
         $bodyArray = Json::fromString($this->body)->asDecodedJson();
+
+        $request = new Request($this->putMethod, $this->uri, $this->requestHeaders);
         $this->request = $request->withParsedBody($bodyArray);
         $this->integrationDatabase->waitForDatabase();
 
-        $this->response = $this->verbManager->createVerb($this->request);
+        $this->response = $this->verbManager->createVerb(JwtUserProvider::getUser($name), $this->request);
     }
 
 

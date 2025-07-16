@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace norsk\api;
 
-use norsk\api\app\config\DbConfig;
-use norsk\api\app\config\Path;
+use norsk\api\infrastructure\config\DbConfig;
+use norsk\api\infrastructure\config\Path;
 use norsk\api\tests\stubs\VirtualTestDatabase;
 use Throwable;
 

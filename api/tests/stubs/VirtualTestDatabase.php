@@ -6,11 +6,11 @@ namespace norsk\api\tests\stubs;
 
 use mysqli;
 use mysqli_result;
-use norsk\api\app\config\DbConfig;
-use norsk\api\app\persistence\GenericSqlStatement;
-use norsk\api\app\persistence\Parameters;
-use norsk\api\app\persistence\SqlResult;
-use norsk\api\app\persistence\TableName;
+use norsk\api\infrastructure\config\DbConfig;
+use norsk\api\infrastructure\persistence\GenericSqlStatement;
+use norsk\api\infrastructure\persistence\Parameters;
+use norsk\api\infrastructure\persistence\SqlResult;
+use norsk\api\infrastructure\persistence\TableName;
 use RuntimeException;
 
 class VirtualTestDatabase

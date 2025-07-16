@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace norsk\api\tests\acceptance;
 
 use Behat\Behat\Context\Context;
+use Behat\Gherkin\Node\PyStringNode;
 use Behat\Hook\AfterScenario;
 use Behat\Hook\BeforeScenario;
 use Behat\Step\Given;
@@ -13,25 +14,26 @@ use Behat\Step\When;
 use GuzzleHttp\Psr7\Response;
 use GuzzleHttp\Psr7\ServerRequest as Request;
 use InvalidArgumentException;
-use norsk\api\app\config\AppConfig;
-use norsk\api\app\config\DbConfig;
-use norsk\api\app\config\Path;
-use norsk\api\app\logging\Logger;
-use norsk\api\app\persistence\DbConnection;
-use norsk\api\app\persistence\GenericSqlStatement;
-use norsk\api\app\persistence\MysqliWrapper;
-use norsk\api\app\persistence\Parameters;
-use norsk\api\app\persistence\TableName;
-use norsk\api\app\response\Url;
+use norsk\api\helperTools\MockHelper;
 use norsk\api\helperTools\Removable;
-use norsk\api\shared\Json;
+use norsk\api\infrastructure\config\AppConfig;
+use norsk\api\infrastructure\config\DbConfig;
+use norsk\api\infrastructure\config\Path;
+use norsk\api\infrastructure\logging\Logger;
+use norsk\api\infrastructure\persistence\DbConnection;
+use norsk\api\infrastructure\persistence\GenericSqlStatement;
+use norsk\api\infrastructure\persistence\MysqliWrapper;
+use norsk\api\infrastructure\persistence\Parameters;
+use norsk\api\infrastructure\persistence\TableName;
+use norsk\api\shared\application\Json;
+use norsk\api\shared\infrastructure\http\response\Url;
 use norsk\api\tests\provider\TestHeader;
 use norsk\api\tests\stubs\VirtualTestDatabase;
-use norsk\api\user\PasswordVector;
-use norsk\api\user\Registration;
-use norsk\api\user\Salt;
-use norsk\api\user\UsersWriter;
+use norsk\api\user\domain\service\JwtService;
+use norsk\api\user\infrastructure\UserManagementFactory;
+use norsk\api\user\infrastructure\web\controller\Registration;
 use PHPUnit\Framework\Assert;
+use PHPUnit\Framework\MockObject\MockObject;
 use Psr\Http\Message\ResponseInterface;
 
 class UserRegistrationDomainContext implements Context
@@ -75,17 +77,16 @@ class UserRegistrationDomainContext implements Context
 
         $mysqli = new MysqliWrapper();
         $database = new DbConnection($mysqli, $this->dbConfig);
-        $usersWriter = new UsersWriter($database);
         $this->logPath = $appConfig->getLogPath();
         $logger = Logger::create($this->logPath);
 
-        $salt = Salt::init();
-        $salt->generate();
-        $pepper = $appConfig->getPepper();
-        $passwordVector = PasswordVector::by($salt, $pepper);
-
         $this->url = Url::by('http://foo');
-        $this->registration = new Registration($logger, $usersWriter, $passwordVector, $this->url);
+
+        /** @var JwtService|MockObject $jwtManagementMock */
+        $jwtManagementMock = MockHelper::createJwtManagementMock();
+
+        $context = new UserManagementFactory($logger, $database, $jwtManagementMock, $appConfig);
+        $this->registration = $context->registration();
     }
 
 
@@ -137,9 +138,9 @@ class UserRegistrationDomainContext implements Context
     {
         $body = '{"firstName": "Karl-Klaus","lastName": "Tausch",'
                 . '"username": "Klaus","password": "myVerySecretlySecret"}';
+        $bodyArray = Json::fromString($body)->asDecodedJson();
 
         $request = new Request($this->method, $this->uri, $this->requestHeaders);
-        $bodyArray = Json::fromString($body)->asDecodedJson();
         $requestWithParsedBody = $request->withParsedBody($bodyArray);
 
         $this->response = $this->registration->registerUser($requestWithParsedBody);
@@ -214,9 +215,9 @@ class UserRegistrationDomainContext implements Context
     {
         $body = '{"firstName": "Karl-Heinz","lastName": "Tausch",'
                 . '"username": "heinz","password": "myVerySecretlySecret"}';
+        $bodyArray = Json::fromString($body)->asDecodedJson();
 
         $request = new Request($this->method, $this->uri, $this->requestHeaders);
-        $bodyArray = Json::fromString($body)->asDecodedJson();
         $requestWithParsedBody = $request->withParsedBody($bodyArray);
 
         $this->response = $this->registration->registerUser($requestWithParsedBody);
@@ -236,8 +237,9 @@ class UserRegistrationDomainContext implements Context
             )
         };
 
-        $request = new Request($this->method, $this->uri, $this->requestHeaders);
         $bodyArray = Json::fromString($body)->asDecodedJson();
+
+        $request = new Request($this->method, $this->uri, $this->requestHeaders);
         $this->request = $request->withParsedBody($bodyArray);
     }
 
@@ -247,9 +249,9 @@ class UserRegistrationDomainContext implements Context
     {
         $body = '{"firstName": "Karl-Heinz","lastName": "Tausch",'
                 . '"username": "heinz","password": "tooShort"}';
+        $bodyArray = Json::fromString($body)->asDecodedJson();
 
         $request = new Request($this->method, $this->uri, $this->requestHeaders);
-        $bodyArray = Json::fromString($body)->asDecodedJson();
         $this->request = $request->withParsedBody($bodyArray);
     }
 
@@ -261,13 +263,14 @@ class UserRegistrationDomainContext implements Context
     }
 
 
-    #[Then('I should get an error :number :message')]
-    public function iShouldGetAnError(string $number, string $message): void
+    #[Then('I should get an error :number:')]
+    public function iShouldGetAnError(string $number, PyStringNode $message): void
     {
+        $expectedMessage = $message->getRaw();
         $expectedResponse = new Response(
             (int)$number,
             $this->responseHeaders,
-            $message
+            $expectedMessage
         );
 
         Assert::assertEquals(
@@ -277,7 +280,7 @@ class UserRegistrationDomainContext implements Context
         );
         Assert::assertEquals($expectedResponse->getHeaders(), $this->response->getHeaders(), 'headers match');
         $actualMessage = $this->response->getBody()->getContents();
-        Assert::assertEquals($message, $actualMessage, 'message match');
+        Assert::assertEquals($expectedMessage, $actualMessage, 'message match');
     }
 
 
