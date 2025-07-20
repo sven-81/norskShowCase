@@ -1,0 +1,23 @@
+### GET all Words
+GET localhost:9999/api/v1/train/words
+Content-Type: application/json
+Authorization: Bearer {{user_token}}
+
+
+### GET all Verbs
+GET localhost:9999/api/v1/train/verbs
+Content-Type: application/json
+Authorization: Bearer {{user_token}}
+
+
+### Save successfully trained word
+PATCH localhost:9999/api/v1/train/words/1
+Content-Type: application/json
+Authorization: Bearer {{user_token}}
+
+
+### Save successfully trained verb
+PATCH localhost:9999/api/v1/train/verbs/1
+Content-Type: application/json
+Authorization: Bearer {{user_token}}
+

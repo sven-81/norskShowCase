@@ -19,6 +19,8 @@ BIN=api/vendor/bin/
 MND=$(BIN)phpmnd
 STAN=$(BIN)phpstan
 BEHAT=$(BIN)behat
+ARC=$(BIN)phparkitect
+TRAC=$(BIN)deptrac
 PHP=$(BIN)php
 UNIT=$(BIN)phpunit
 METRICS=$(BIN)phpmetrics
@@ -114,6 +116,13 @@ dev:		# checking git working and up-to-date, container and tests working
 	@echo "$(GREEN)You're all set and ready to dev$(END_COLORING)"
 
 ################## Php helper ###################
+arc:
+	docker exec php8-norsk-dev $(ARC) check --config=./tools/phparkitect.php
+	@echo "$(GREEN)Done architekt$(END_COLORING)"
+	docker exec php8-norsk-dev $(TRAC) analyse -c ./tools/deptrac.yaml --fail-on-uncovered
+	docker exec php8-norsk-dev $(TRAC) analyse -c ./tools/deptrac.yaml --formatter=mermaidjs --output=./tools/deptracDiagramm
+	@echo "$(GREEN)Done architekt$(END_COLORING)"
+
 behat:			# run behat alone
 	docker exec php8-norsk-dev $(BEHAT) --config tools/behat.yml -n --colors
 	@echo "$(GREEN)Done bdd$(END_COLORING)"
@@ -136,8 +145,8 @@ mutation:		# infection
 	docker exec php8-norsk-dev $(INFECTION) --configuration=tools/infection.json5 -s --only-covered
 	@echo "$(GREEN)Done mutation testing$(END_COLORING)"
 
-report:			# phpMetrics report to e.g. http://localhost:63342/norsk/tools/reports/29-11-23-09-59-53/index.html
-	docker exec php8-norsk-dev $(METRICS) --report-html=./tools/reports/`date +'%d-%m-%y-%H-%M-%S'` ./
+report:			# phpMetrics report to e.g. http://localhost:63342/norsk/tools/reports/23-12-29_09-59-53/index.html
+	docker exec php8-norsk-dev $(METRICS) --report-html=./tools/reports/`date +'%y-%m-%d_%H-%M-%S'` ./
 	@echo "$(GREEN)Done metrics report$(END_COLORING)"
 
 cs:				# sniffer + beautifier
