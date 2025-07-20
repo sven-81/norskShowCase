@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace norsk\api;
 
-use norsk\api\app\config\AppConfig;
-use norsk\api\app\config\DbConfig;
-use norsk\api\app\config\Path;
-use norsk\api\app\Factory;
-use norsk\api\app\logging\Logger;
-use norsk\api\app\response\ResponseCode;
+use norsk\api\infrastructure\config\AppConfig;
+use norsk\api\infrastructure\config\DbConfig;
+use norsk\api\infrastructure\config\Path;
+use norsk\api\infrastructure\Factory;
+use norsk\api\infrastructure\logging\Logger;
+use norsk\api\shared\infrastructure\http\response\ResponseCode;
 use RuntimeException;
 use Throwable;
 

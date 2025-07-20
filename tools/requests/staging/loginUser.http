@@ -1,0 +1,11 @@
+### Login User with Bearer-Token
+POST localhost:9997/api/v1/user
+Content-Type: application/json
+Authorization: Bearer {{client_token}}
+
+{ "username": "test", "password": "123456789pP_" }
+
+> {%
+    const data = response.body;
+    client.global.set("user_token", data.token);
+%}

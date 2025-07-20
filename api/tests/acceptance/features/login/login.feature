@@ -40,7 +40,7 @@ Feature: User Login
   Scenario: Login attempt without username
     Given request is missing username
     When I login
-    Then I should get an error 400 '{"message":"Missing required parameter: userName"}'
+    Then I should get an error 400 '{"message":"Missing required parameter: username"}'
 
   Scenario: Login attempt without password
     Given request is missing password

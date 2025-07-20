@@ -1,59 +1,963 @@
+Note: Pass `--log-verbosity=all` to log information about killed and errored mutants.
+Note: Pass `--debug` to log test-framework output.
+
 Escaped mutants:
 ================
 
-1) /app/api/src/app/NorskApi.php:40    [M] MethodCallRemoval
+1) /app/api/src/infrastructure/NorskApi.php:37    [M] MethodCallRemoval [ID] 694c32f83fc45271c8b3d73ce60b40c2
 
 @@ @@
-         $session = Session::create();
-         $this->router->run($this->app, $session);
-         $this->app->run();
--        $session->destroy();
+         $this->app->addBodyParsingMiddleware();
+         $this->app->addRoutingMiddleware();
+         $this->app->addErrorMiddleware($this->appLoggerConfig->isDisplayErrorDetails(), $this->appLoggerConfig->isLogErrors(), $this->appLoggerConfig->isLogErrorDetails());
+-        $this->app->addMiddleware($this->corsMiddleware);
 +        
+         $this->router->run($this->app);
+         $this->app->run();
          $this->logger->info(LogMessage::fromString('Stopping Norsk API'));
      }
  }
 
 
-2) /app/api/src/app/config/AppConfig.php:142    [M] CastBool
+2) /app/api/src/infrastructure/logging/Logger.php:24    [M] ArrayItemRemoval [ID] 573aaaf8cbd90078969ebeb4710a4fe7
 
 @@ @@
-         $displayErrorDetails = $logConfigItems['displayErrorDetails'];
-         $logErrors = $logConfigItems['logErrors'];
-         $logErrorDetails = $logConfigItems['logErrorDetails'];
--        return AppLoggerConfig::by($path, (bool) $displayErrorDetails, (bool) $logErrors, (bool) $logErrorDetails);
-+        return AppLoggerConfig::by($path, $displayErrorDetails, (bool) $logErrors, (bool) $logErrorDetails);
+     {
+         $logFormat = "[{date}]\t[{level}]\t{message}";
+         $logFileName = 'log_' . date('Y-m-d') . '.log';
+-        $this->logger = new KLogger(logDirectory: $logPath->asString(), logLevelThreshold: LogLevel::INFO, options: ['dateFormat' => 'Y-m-d H:i:s.u', 'logFormat' => $logFormat, 'filename' => $logFileName]);
++        $this->logger = new KLogger(logDirectory: $logPath->asString(), logLevelThreshold: LogLevel::INFO, options: ['logFormat' => $logFormat, 'filename' => $logFileName]);
      }
-     private static function readJwtConfig(array $auth): JwtConfig
+     public static function create(Path $logPath): self
      {
 
 
-3) /app/api/src/app/config/AppConfig.php:142    [M] CastBool
+3) /app/api/src/infrastructure/logging/Logger.php:41    [M] ConcatOperandRemoval [ID] 79cea59cb368530497445d774274eb88
 
 @@ @@
-         $displayErrorDetails = $logConfigItems['displayErrorDetails'];
-         $logErrors = $logConfigItems['logErrors'];
-         $logErrorDetails = $logConfigItems['logErrorDetails'];
--        return AppLoggerConfig::by($path, (bool) $displayErrorDetails, (bool) $logErrors, (bool) $logErrorDetails);
-+        return AppLoggerConfig::by($path, (bool) $displayErrorDetails, $logErrors, (bool) $logErrorDetails);
      }
-     private static function readJwtConfig(array $auth): JwtConfig
+     public function error(Throwable $throwable): void
+     {
+-        $logMessage = 'Error-Code: ' . $throwable->getCode() . PHP_EOL . 'File: ' . $throwable->getFile() . PHP_EOL . 'Line: ' . $throwable->getLine() . PHP_EOL . 'Message: ' . $throwable->getMessage() . PHP_EOL . 'Stack: ' . $throwable->getTraceAsString() . PHP_EOL;
++        $logMessage = 'Error-Code: ' . $throwable->getCode() . 'File: ' . $throwable->getFile() . PHP_EOL . 'Line: ' . $throwable->getLine() . PHP_EOL . 'Message: ' . $throwable->getMessage() . PHP_EOL . 'Stack: ' . $throwable->getTraceAsString() . PHP_EOL;
+         $this->logger->error($logMessage);
+     }
+     public function info(LogMessage $logMessage): void
+
+
+4) /app/api/src/infrastructure/logging/Logger.php:41    [M] Concat [ID] c0718970ab4f14aa449eca344d31cdcf
+
+@@ @@
+     }
+     public function error(Throwable $throwable): void
+     {
+-        $logMessage = 'Error-Code: ' . $throwable->getCode() . PHP_EOL . 'File: ' . $throwable->getFile() . PHP_EOL . 'Line: ' . $throwable->getLine() . PHP_EOL . 'Message: ' . $throwable->getMessage() . PHP_EOL . 'Stack: ' . $throwable->getTraceAsString() . PHP_EOL;
++        $logMessage = 'Error-Code: ' . $throwable->getCode() . 'File: ' . PHP_EOL . $throwable->getFile() . PHP_EOL . 'Line: ' . $throwable->getLine() . PHP_EOL . 'Message: ' . $throwable->getMessage() . PHP_EOL . 'Stack: ' . $throwable->getTraceAsString() . PHP_EOL;
+         $this->logger->error($logMessage);
+     }
+     public function info(LogMessage $logMessage): void
+
+
+5) /app/api/src/infrastructure/logging/Logger.php:41    [M] ConcatOperandRemoval [ID] 2e7a0baa63424fdf24accd4d9438ec5e
+
+@@ @@
+     }
+     public function error(Throwable $throwable): void
+     {
+-        $logMessage = 'Error-Code: ' . $throwable->getCode() . PHP_EOL . 'File: ' . $throwable->getFile() . PHP_EOL . 'Line: ' . $throwable->getLine() . PHP_EOL . 'Message: ' . $throwable->getMessage() . PHP_EOL . 'Stack: ' . $throwable->getTraceAsString() . PHP_EOL;
++        $logMessage = 'Error-Code: ' . $throwable->getCode() . PHP_EOL . $throwable->getFile() . PHP_EOL . 'Line: ' . $throwable->getLine() . PHP_EOL . 'Message: ' . $throwable->getMessage() . PHP_EOL . 'Stack: ' . $throwable->getTraceAsString() . PHP_EOL;
+         $this->logger->error($logMessage);
+     }
+     public function info(LogMessage $logMessage): void
+
+
+6) /app/api/src/infrastructure/logging/Logger.php:41    [M] Concat [ID] 52221486479027ca081e76c7871593a4
+
+@@ @@
+     }
+     public function error(Throwable $throwable): void
+     {
+-        $logMessage = 'Error-Code: ' . $throwable->getCode() . PHP_EOL . 'File: ' . $throwable->getFile() . PHP_EOL . 'Line: ' . $throwable->getLine() . PHP_EOL . 'Message: ' . $throwable->getMessage() . PHP_EOL . 'Stack: ' . $throwable->getTraceAsString() . PHP_EOL;
++        $logMessage = 'Error-Code: ' . $throwable->getCode() . PHP_EOL . $throwable->getFile() . 'File: ' . PHP_EOL . 'Line: ' . $throwable->getLine() . PHP_EOL . 'Message: ' . $throwable->getMessage() . PHP_EOL . 'Stack: ' . $throwable->getTraceAsString() . PHP_EOL;
+         $this->logger->error($logMessage);
+     }
+     public function info(LogMessage $logMessage): void
+
+
+7) /app/api/src/infrastructure/logging/Logger.php:41    [M] ConcatOperandRemoval [ID] 52afd94d8961169a789350432de2252c
+
+@@ @@
+     }
+     public function error(Throwable $throwable): void
+     {
+-        $logMessage = 'Error-Code: ' . $throwable->getCode() . PHP_EOL . 'File: ' . $throwable->getFile() . PHP_EOL . 'Line: ' . $throwable->getLine() . PHP_EOL . 'Message: ' . $throwable->getMessage() . PHP_EOL . 'Stack: ' . $throwable->getTraceAsString() . PHP_EOL;
++        $logMessage = 'Error-Code: ' . $throwable->getCode() . PHP_EOL . 'File: ' . PHP_EOL . 'Line: ' . $throwable->getLine() . PHP_EOL . 'Message: ' . $throwable->getMessage() . PHP_EOL . 'Stack: ' . $throwable->getTraceAsString() . PHP_EOL;
+         $this->logger->error($logMessage);
+     }
+     public function info(LogMessage $logMessage): void
+
+
+8) /app/api/src/infrastructure/logging/Logger.php:41    [M] Concat [ID] 1f500d9cc7e855f7830acd6c3cac45e9
+
+@@ @@
+     }
+     public function error(Throwable $throwable): void
+     {
+-        $logMessage = 'Error-Code: ' . $throwable->getCode() . PHP_EOL . 'File: ' . $throwable->getFile() . PHP_EOL . 'Line: ' . $throwable->getLine() . PHP_EOL . 'Message: ' . $throwable->getMessage() . PHP_EOL . 'Stack: ' . $throwable->getTraceAsString() . PHP_EOL;
++        $logMessage = 'Error-Code: ' . $throwable->getCode() . PHP_EOL . 'File: ' . PHP_EOL . $throwable->getFile() . 'Line: ' . $throwable->getLine() . PHP_EOL . 'Message: ' . $throwable->getMessage() . PHP_EOL . 'Stack: ' . $throwable->getTraceAsString() . PHP_EOL;
+         $this->logger->error($logMessage);
+     }
+     public function info(LogMessage $logMessage): void
+
+
+9) /app/api/src/infrastructure/logging/Logger.php:41    [M] ConcatOperandRemoval [ID] adf33980845c3f05055e7f28df144b73
+
+@@ @@
+     }
+     public function error(Throwable $throwable): void
+     {
+-        $logMessage = 'Error-Code: ' . $throwable->getCode() . PHP_EOL . 'File: ' . $throwable->getFile() . PHP_EOL . 'Line: ' . $throwable->getLine() . PHP_EOL . 'Message: ' . $throwable->getMessage() . PHP_EOL . 'Stack: ' . $throwable->getTraceAsString() . PHP_EOL;
++        $logMessage = 'Error-Code: ' . $throwable->getCode() . PHP_EOL . 'File: ' . $throwable->getFile() . 'Line: ' . $throwable->getLine() . PHP_EOL . 'Message: ' . $throwable->getMessage() . PHP_EOL . 'Stack: ' . $throwable->getTraceAsString() . PHP_EOL;
+         $this->logger->error($logMessage);
+     }
+     public function info(LogMessage $logMessage): void
+
+
+10) /app/api/src/infrastructure/logging/Logger.php:41    [M] Concat [ID] 26ca4a16b1fd1468432fe8fcc0ed145b
+
+@@ @@
+     }
+     public function error(Throwable $throwable): void
+     {
+-        $logMessage = 'Error-Code: ' . $throwable->getCode() . PHP_EOL . 'File: ' . $throwable->getFile() . PHP_EOL . 'Line: ' . $throwable->getLine() . PHP_EOL . 'Message: ' . $throwable->getMessage() . PHP_EOL . 'Stack: ' . $throwable->getTraceAsString() . PHP_EOL;
++        $logMessage = 'Error-Code: ' . $throwable->getCode() . PHP_EOL . 'File: ' . $throwable->getFile() . 'Line: ' . PHP_EOL . $throwable->getLine() . PHP_EOL . 'Message: ' . $throwable->getMessage() . PHP_EOL . 'Stack: ' . $throwable->getTraceAsString() . PHP_EOL;
+         $this->logger->error($logMessage);
+     }
+     public function info(LogMessage $logMessage): void
+
+
+11) /app/api/src/infrastructure/logging/Logger.php:41    [M] ConcatOperandRemoval [ID] 415f1c4fd06add691b53cb4f08119841
+
+@@ @@
+     }
+     public function error(Throwable $throwable): void
+     {
+-        $logMessage = 'Error-Code: ' . $throwable->getCode() . PHP_EOL . 'File: ' . $throwable->getFile() . PHP_EOL . 'Line: ' . $throwable->getLine() . PHP_EOL . 'Message: ' . $throwable->getMessage() . PHP_EOL . 'Stack: ' . $throwable->getTraceAsString() . PHP_EOL;
++        $logMessage = 'Error-Code: ' . $throwable->getCode() . PHP_EOL . 'File: ' . $throwable->getFile() . PHP_EOL . $throwable->getLine() . PHP_EOL . 'Message: ' . $throwable->getMessage() . PHP_EOL . 'Stack: ' . $throwable->getTraceAsString() . PHP_EOL;
+         $this->logger->error($logMessage);
+     }
+     public function info(LogMessage $logMessage): void
+
+
+12) /app/api/src/infrastructure/logging/Logger.php:41    [M] Concat [ID] 9263021e08edf62453a26f9f60310aee
+
+@@ @@
+     }
+     public function error(Throwable $throwable): void
+     {
+-        $logMessage = 'Error-Code: ' . $throwable->getCode() . PHP_EOL . 'File: ' . $throwable->getFile() . PHP_EOL . 'Line: ' . $throwable->getLine() . PHP_EOL . 'Message: ' . $throwable->getMessage() . PHP_EOL . 'Stack: ' . $throwable->getTraceAsString() . PHP_EOL;
++        $logMessage = 'Error-Code: ' . $throwable->getCode() . PHP_EOL . 'File: ' . $throwable->getFile() . PHP_EOL . $throwable->getLine() . 'Line: ' . PHP_EOL . 'Message: ' . $throwable->getMessage() . PHP_EOL . 'Stack: ' . $throwable->getTraceAsString() . PHP_EOL;
+         $this->logger->error($logMessage);
+     }
+     public function info(LogMessage $logMessage): void
+
+
+13) /app/api/src/infrastructure/logging/Logger.php:41    [M] ConcatOperandRemoval [ID] e70bb7bb78e1e04b1106dd5a6e470071
+
+@@ @@
+     }
+     public function error(Throwable $throwable): void
+     {
+-        $logMessage = 'Error-Code: ' . $throwable->getCode() . PHP_EOL . 'File: ' . $throwable->getFile() . PHP_EOL . 'Line: ' . $throwable->getLine() . PHP_EOL . 'Message: ' . $throwable->getMessage() . PHP_EOL . 'Stack: ' . $throwable->getTraceAsString() . PHP_EOL;
++        $logMessage = 'Error-Code: ' . $throwable->getCode() . PHP_EOL . 'File: ' . $throwable->getFile() . PHP_EOL . 'Line: ' . PHP_EOL . 'Message: ' . $throwable->getMessage() . PHP_EOL . 'Stack: ' . $throwable->getTraceAsString() . PHP_EOL;
+         $this->logger->error($logMessage);
+     }
+     public function info(LogMessage $logMessage): void
+
+
+14) /app/api/src/infrastructure/logging/Logger.php:41    [M] Concat [ID] 1f97f9c7fdcfe0cf2aa563e7c4d4a12c
+
+@@ @@
+     }
+     public function error(Throwable $throwable): void
+     {
+-        $logMessage = 'Error-Code: ' . $throwable->getCode() . PHP_EOL . 'File: ' . $throwable->getFile() . PHP_EOL . 'Line: ' . $throwable->getLine() . PHP_EOL . 'Message: ' . $throwable->getMessage() . PHP_EOL . 'Stack: ' . $throwable->getTraceAsString() . PHP_EOL;
++        $logMessage = 'Error-Code: ' . $throwable->getCode() . PHP_EOL . 'File: ' . $throwable->getFile() . PHP_EOL . 'Line: ' . PHP_EOL . $throwable->getLine() . 'Message: ' . $throwable->getMessage() . PHP_EOL . 'Stack: ' . $throwable->getTraceAsString() . PHP_EOL;
+         $this->logger->error($logMessage);
+     }
+     public function info(LogMessage $logMessage): void
+
+
+15) /app/api/src/infrastructure/logging/Logger.php:41    [M] ConcatOperandRemoval [ID] fdb88850288748a54e47e1b5c1d24217
+
+@@ @@
+     }
+     public function error(Throwable $throwable): void
+     {
+-        $logMessage = 'Error-Code: ' . $throwable->getCode() . PHP_EOL . 'File: ' . $throwable->getFile() . PHP_EOL . 'Line: ' . $throwable->getLine() . PHP_EOL . 'Message: ' . $throwable->getMessage() . PHP_EOL . 'Stack: ' . $throwable->getTraceAsString() . PHP_EOL;
++        $logMessage = 'Error-Code: ' . $throwable->getCode() . PHP_EOL . 'File: ' . $throwable->getFile() . PHP_EOL . 'Line: ' . $throwable->getLine() . 'Message: ' . $throwable->getMessage() . PHP_EOL . 'Stack: ' . $throwable->getTraceAsString() . PHP_EOL;
+         $this->logger->error($logMessage);
+     }
+     public function info(LogMessage $logMessage): void
+
+
+16) /app/api/src/infrastructure/logging/Logger.php:41    [M] Concat [ID] ca5b77bf81900d6d629d43a65eaff8a2
+
+@@ @@
+     }
+     public function error(Throwable $throwable): void
+     {
+-        $logMessage = 'Error-Code: ' . $throwable->getCode() . PHP_EOL . 'File: ' . $throwable->getFile() . PHP_EOL . 'Line: ' . $throwable->getLine() . PHP_EOL . 'Message: ' . $throwable->getMessage() . PHP_EOL . 'Stack: ' . $throwable->getTraceAsString() . PHP_EOL;
++        $logMessage = 'Error-Code: ' . $throwable->getCode() . PHP_EOL . 'File: ' . $throwable->getFile() . PHP_EOL . 'Line: ' . $throwable->getLine() . 'Message: ' . PHP_EOL . $throwable->getMessage() . PHP_EOL . 'Stack: ' . $throwable->getTraceAsString() . PHP_EOL;
+         $this->logger->error($logMessage);
+     }
+     public function info(LogMessage $logMessage): void
+
+
+17) /app/api/src/infrastructure/logging/Logger.php:41    [M] ConcatOperandRemoval [ID] 1151faef53d0eab18f03813d3d96f4f7
+
+@@ @@
+     }
+     public function error(Throwable $throwable): void
+     {
+-        $logMessage = 'Error-Code: ' . $throwable->getCode() . PHP_EOL . 'File: ' . $throwable->getFile() . PHP_EOL . 'Line: ' . $throwable->getLine() . PHP_EOL . 'Message: ' . $throwable->getMessage() . PHP_EOL . 'Stack: ' . $throwable->getTraceAsString() . PHP_EOL;
++        $logMessage = 'Error-Code: ' . $throwable->getCode() . PHP_EOL . 'File: ' . $throwable->getFile() . PHP_EOL . 'Line: ' . $throwable->getLine() . PHP_EOL . $throwable->getMessage() . PHP_EOL . 'Stack: ' . $throwable->getTraceAsString() . PHP_EOL;
+         $this->logger->error($logMessage);
+     }
+     public function info(LogMessage $logMessage): void
+
+
+18) /app/api/src/infrastructure/logging/Logger.php:41    [M] Concat [ID] f7a2ab719b875dc44145134ffcf975f9
+
+@@ @@
+     }
+     public function error(Throwable $throwable): void
+     {
+-        $logMessage = 'Error-Code: ' . $throwable->getCode() . PHP_EOL . 'File: ' . $throwable->getFile() . PHP_EOL . 'Line: ' . $throwable->getLine() . PHP_EOL . 'Message: ' . $throwable->getMessage() . PHP_EOL . 'Stack: ' . $throwable->getTraceAsString() . PHP_EOL;
++        $logMessage = 'Error-Code: ' . $throwable->getCode() . PHP_EOL . 'File: ' . $throwable->getFile() . PHP_EOL . 'Line: ' . $throwable->getLine() . PHP_EOL . $throwable->getMessage() . 'Message: ' . PHP_EOL . 'Stack: ' . $throwable->getTraceAsString() . PHP_EOL;
+         $this->logger->error($logMessage);
+     }
+     public function info(LogMessage $logMessage): void
+
+
+19) /app/api/src/infrastructure/logging/Logger.php:41    [M] ConcatOperandRemoval [ID] 8f20b9ae990b8fb2f0f8f3645a21df68
+
+@@ @@
+     }
+     public function error(Throwable $throwable): void
+     {
+-        $logMessage = 'Error-Code: ' . $throwable->getCode() . PHP_EOL . 'File: ' . $throwable->getFile() . PHP_EOL . 'Line: ' . $throwable->getLine() . PHP_EOL . 'Message: ' . $throwable->getMessage() . PHP_EOL . 'Stack: ' . $throwable->getTraceAsString() . PHP_EOL;
++        $logMessage = 'Error-Code: ' . $throwable->getCode() . PHP_EOL . 'File: ' . $throwable->getFile() . PHP_EOL . 'Line: ' . $throwable->getLine() . PHP_EOL . 'Message: ' . PHP_EOL . 'Stack: ' . $throwable->getTraceAsString() . PHP_EOL;
+         $this->logger->error($logMessage);
+     }
+     public function info(LogMessage $logMessage): void
+
+
+20) /app/api/src/infrastructure/logging/Logger.php:41    [M] Concat [ID] 5dff2d2c0c67e8ecbc5fb8f3a51d11ce
+
+@@ @@
+     }
+     public function error(Throwable $throwable): void
+     {
+-        $logMessage = 'Error-Code: ' . $throwable->getCode() . PHP_EOL . 'File: ' . $throwable->getFile() . PHP_EOL . 'Line: ' . $throwable->getLine() . PHP_EOL . 'Message: ' . $throwable->getMessage() . PHP_EOL . 'Stack: ' . $throwable->getTraceAsString() . PHP_EOL;
++        $logMessage = 'Error-Code: ' . $throwable->getCode() . PHP_EOL . 'File: ' . $throwable->getFile() . PHP_EOL . 'Line: ' . $throwable->getLine() . PHP_EOL . 'Message: ' . PHP_EOL . $throwable->getMessage() . 'Stack: ' . $throwable->getTraceAsString() . PHP_EOL;
+         $this->logger->error($logMessage);
+     }
+     public function info(LogMessage $logMessage): void
+
+
+21) /app/api/src/infrastructure/logging/Logger.php:41    [M] ConcatOperandRemoval [ID] e9a10110261ab907993429942a4ece73
+
+@@ @@
+     }
+     public function error(Throwable $throwable): void
+     {
+-        $logMessage = 'Error-Code: ' . $throwable->getCode() . PHP_EOL . 'File: ' . $throwable->getFile() . PHP_EOL . 'Line: ' . $throwable->getLine() . PHP_EOL . 'Message: ' . $throwable->getMessage() . PHP_EOL . 'Stack: ' . $throwable->getTraceAsString() . PHP_EOL;
++        $logMessage = 'Error-Code: ' . $throwable->getCode() . PHP_EOL . 'File: ' . $throwable->getFile() . PHP_EOL . 'Line: ' . $throwable->getLine() . PHP_EOL . 'Message: ' . $throwable->getMessage() . 'Stack: ' . $throwable->getTraceAsString() . PHP_EOL;
+         $this->logger->error($logMessage);
+     }
+     public function info(LogMessage $logMessage): void
+
+
+22) /app/api/src/infrastructure/logging/Logger.php:41    [M] Concat [ID] a33be80cecac37a71377757d12bcf1eb
+
+@@ @@
+     }
+     public function error(Throwable $throwable): void
+     {
+-        $logMessage = 'Error-Code: ' . $throwable->getCode() . PHP_EOL . 'File: ' . $throwable->getFile() . PHP_EOL . 'Line: ' . $throwable->getLine() . PHP_EOL . 'Message: ' . $throwable->getMessage() . PHP_EOL . 'Stack: ' . $throwable->getTraceAsString() . PHP_EOL;
++        $logMessage = 'Error-Code: ' . $throwable->getCode() . PHP_EOL . 'File: ' . $throwable->getFile() . PHP_EOL . 'Line: ' . $throwable->getLine() . PHP_EOL . 'Message: ' . $throwable->getMessage() . 'Stack: ' . PHP_EOL . $throwable->getTraceAsString() . PHP_EOL;
+         $this->logger->error($logMessage);
+     }
+     public function info(LogMessage $logMessage): void
+
+
+23) /app/api/src/infrastructure/logging/Logger.php:41    [M] ConcatOperandRemoval [ID] f6f1c48ebfcf31ad809ee5c810f3faf6
+
+@@ @@
+     }
+     public function error(Throwable $throwable): void
+     {
+-        $logMessage = 'Error-Code: ' . $throwable->getCode() . PHP_EOL . 'File: ' . $throwable->getFile() . PHP_EOL . 'Line: ' . $throwable->getLine() . PHP_EOL . 'Message: ' . $throwable->getMessage() . PHP_EOL . 'Stack: ' . $throwable->getTraceAsString() . PHP_EOL;
++        $logMessage = 'Error-Code: ' . $throwable->getCode() . PHP_EOL . 'File: ' . $throwable->getFile() . PHP_EOL . 'Line: ' . $throwable->getLine() . PHP_EOL . 'Message: ' . $throwable->getMessage() . PHP_EOL . $throwable->getTraceAsString() . PHP_EOL;
+         $this->logger->error($logMessage);
+     }
+     public function info(LogMessage $logMessage): void
+
+
+24) /app/api/src/infrastructure/logging/Logger.php:41    [M] Concat [ID] 1d3293e374689c78de250345c871bb28
+
+@@ @@
+     }
+     public function error(Throwable $throwable): void
+     {
+-        $logMessage = 'Error-Code: ' . $throwable->getCode() . PHP_EOL . 'File: ' . $throwable->getFile() . PHP_EOL . 'Line: ' . $throwable->getLine() . PHP_EOL . 'Message: ' . $throwable->getMessage() . PHP_EOL . 'Stack: ' . $throwable->getTraceAsString() . PHP_EOL;
++        $logMessage = 'Error-Code: ' . $throwable->getCode() . PHP_EOL . 'File: ' . $throwable->getFile() . PHP_EOL . 'Line: ' . $throwable->getLine() . PHP_EOL . 'Message: ' . $throwable->getMessage() . PHP_EOL . $throwable->getTraceAsString() . 'Stack: ' . PHP_EOL;
+         $this->logger->error($logMessage);
+     }
+     public function info(LogMessage $logMessage): void
+
+
+25) /app/api/src/infrastructure/logging/Logger.php:41    [M] ConcatOperandRemoval [ID] a74d1b5f93d628c7ae511bef57990018
+
+@@ @@
+     }
+     public function error(Throwable $throwable): void
+     {
+-        $logMessage = 'Error-Code: ' . $throwable->getCode() . PHP_EOL . 'File: ' . $throwable->getFile() . PHP_EOL . 'Line: ' . $throwable->getLine() . PHP_EOL . 'Message: ' . $throwable->getMessage() . PHP_EOL . 'Stack: ' . $throwable->getTraceAsString() . PHP_EOL;
++        $logMessage = 'Error-Code: ' . $throwable->getCode() . PHP_EOL . 'File: ' . $throwable->getFile() . PHP_EOL . 'Line: ' . $throwable->getLine() . PHP_EOL . 'Message: ' . $throwable->getMessage() . PHP_EOL . 'Stack: ' . PHP_EOL;
+         $this->logger->error($logMessage);
+     }
+     public function info(LogMessage $logMessage): void
+
+
+26) /app/api/src/infrastructure/logging/Logger.php:41    [M] Concat [ID] 52b5a7bdd568bc9532effd220d3ab37c
+
+@@ @@
+     }
+     public function error(Throwable $throwable): void
+     {
+-        $logMessage = 'Error-Code: ' . $throwable->getCode() . PHP_EOL . 'File: ' . $throwable->getFile() . PHP_EOL . 'Line: ' . $throwable->getLine() . PHP_EOL . 'Message: ' . $throwable->getMessage() . PHP_EOL . 'Stack: ' . $throwable->getTraceAsString() . PHP_EOL;
++        $logMessage = 'Error-Code: ' . $throwable->getCode() . PHP_EOL . 'File: ' . $throwable->getFile() . PHP_EOL . 'Line: ' . $throwable->getLine() . PHP_EOL . 'Message: ' . $throwable->getMessage() . PHP_EOL . 'Stack: ' . PHP_EOL . $throwable->getTraceAsString();
+         $this->logger->error($logMessage);
+     }
+     public function info(LogMessage $logMessage): void
+
+
+27) /app/api/src/infrastructure/logging/Logger.php:41    [M] ConcatOperandRemoval [ID] 6ed6b477b3c394fd94ff32ce1839d809
+
+@@ @@
+     }
+     public function error(Throwable $throwable): void
+     {
+-        $logMessage = 'Error-Code: ' . $throwable->getCode() . PHP_EOL . 'File: ' . $throwable->getFile() . PHP_EOL . 'Line: ' . $throwable->getLine() . PHP_EOL . 'Message: ' . $throwable->getMessage() . PHP_EOL . 'Stack: ' . $throwable->getTraceAsString() . PHP_EOL;
++        $logMessage = 'Error-Code: ' . $throwable->getCode() . PHP_EOL . 'File: ' . $throwable->getFile() . PHP_EOL . 'Line: ' . $throwable->getLine() . PHP_EOL . 'Message: ' . $throwable->getMessage() . PHP_EOL . 'Stack: ' . $throwable->getTraceAsString();
+         $this->logger->error($logMessage);
+     }
+     public function info(LogMessage $logMessage): void
+
+
+28) /app/api/src/infrastructure/persistence/DbConnection.php:66    [M] MethodCallRemoval [ID] 986d7d4dca782300ed2fcc129a67c39b
+
+@@ @@
+     }
+     public function createConnection(): void
+     {
+-        $this->enableExceptionInsteadOfFalse();
++        
+         try {
+             if (!$this->isConnected) {
+                 $this->isConnected = $this->mysqli->connect($this->dbConfig->host()->asString(), $this->dbConfig->user()->asString(), $this->dbConfig->password()->asString(), $this->dbConfig->database()->asString(), $this->dbConfig->port()->asInt());
+
+
+29) /app/api/src/infrastructure/persistence/DbConnection.php:124    [M] BitwiseOr [ID] 8521241f957119dcae8b1620be6ac3e0
+
+@@ @@
+     }
+     private function enableExceptionInsteadOfFalse(): void
+     {
+-        mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
++        mysqli_report(MYSQLI_REPORT_ERROR & MYSQLI_REPORT_STRICT);
+     }
+ }
+
+
+30) /app/api/src/infrastructure/persistence/DbConnection.php:124    [M] FunctionCallRemoval [ID] ba35066a9c8cc28437d9b0cac297cd00
+
+@@ @@
+     }
+     private function enableExceptionInsteadOfFalse(): void
+     {
+-        mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
++        
+     }
+ }
+
+
+31) /app/api/src/infrastructure/persistence/SqlResult.php:115    [M] UnwrapArrayKeys [ID] ce3803757864e092aad88440741a2392
+
+@@ @@
+     }
+     private function wasCountedByQuery(): bool
+     {
+-        $anyKeysParent = array_keys($this->result);
++        $anyKeysParent = $this->result;
+         foreach ($anyKeysParent as $parentKey) {
+             if (is_array($this->result[$parentKey]) && count($this->result[$parentKey]) > 0) {
+                 return true;
+
+
+32) /app/api/src/infrastructure/persistence/SqlResult.php:118    [M] GreaterThan [ID] 56980249ec37d8c6748cc4d866722573
+
+@@ @@
+     {
+         $anyKeysParent = array_keys($this->result);
+         foreach ($anyKeysParent as $parentKey) {
+-            if (is_array($this->result[$parentKey]) && count($this->result[$parentKey]) > 0) {
++            if (is_array($this->result[$parentKey]) && count($this->result[$parentKey]) >= 0) {
+                 return true;
+             }
+         }
+
+
+33) /app/api/src/infrastructure/routing/ControllerName.php:18    [M] MethodCallRemoval [ID] 53b37f023eec12cf0f3ce421437a3dcc
+
+@@ @@
+     private function __construct(ControllerInterface $controller)
+     {
+         $this->class = get_class($controller);
+-        $this->ensureClassExists();
++        
+     }
+     public static function of(ControllerInterface $controller): self
      {
 
 
-4) /app/api/src/app/config/AppConfig.php:142    [M] CastBool
+34) /app/api/src/infrastructure/routing/Router.php:34    [M] MethodCallRemoval [ID] 2780c12ced8b7182f6c646fb72ca79a7
 
 @@ @@
-         $displayErrorDetails = $logConfigItems['displayErrorDetails'];
-         $logErrors = $logConfigItems['logErrors'];
-         $logErrorDetails = $logConfigItems['logErrorDetails'];
--        return AppLoggerConfig::by($path, (bool) $displayErrorDetails, (bool) $logErrors, (bool) $logErrorDetails);
-+        return AppLoggerConfig::by($path, (bool) $displayErrorDetails, (bool) $logErrors, $logErrorDetails);
+     private function defineApiRoutes(RouteCollectorProxy $group): void
+     {
+         $this->routeUsers($group);
+-        $this->defineTrainRoutes($group);
++        
+         $this->defineManageRoutes($group);
      }
-     private static function readJwtConfig(array $auth): JwtConfig
+     private function defineTrainRoutes(RouteCollectorProxy $group): void
+
+
+35) /app/api/src/infrastructure/routing/Router.php:35    [M] MethodCallRemoval [ID] b71cfb2c2884f60eda8ff86d0987a08d
+
+@@ @@
+     {
+         $this->routeUsers($group);
+         $this->defineTrainRoutes($group);
+-        $this->defineManageRoutes($group);
++        
+     }
+     private function defineTrainRoutes(RouteCollectorProxy $group): void
      {
 
 
-5) /app/api/src/app/identityAccessManagement/AuthenticationAlgorithm.php:39    [M] ArrayItemRemoval
+36) /app/api/src/infrastructure/routing/Router.php:41    [M] MethodCallRemoval [ID] 412133900e909a544ccd5ceef58b1f3e
+
+@@ @@
+     }
+     private function defineTrainRoutes(RouteCollectorProxy $group): void
+     {
+-        $group->group(pattern: '/train', callable: function (RouteCollectorProxy $trainGroup): void {
+-            $this->trainWords($trainGroup);
+-            $this->trainVerbs($trainGroup);
+-        })->addMiddleware($this->identityAccessManagement->createTrainerAuthorization());
++        
+     }
+     private function defineManageRoutes(RouteCollectorProxy $group): void
+     {
+
+
+37) /app/api/src/infrastructure/routing/Router.php:53    [M] MethodCallRemoval [ID] a6a902e579d0c2bf300b1606a96f8952
+
+@@ @@
+     }
+     private function defineManageRoutes(RouteCollectorProxy $group): void
+     {
+-        $group->group(pattern: '/manage', callable: function (RouteCollectorProxy $manageGroup): void {
+-            $this->manageWords($manageGroup);
+-            $this->manageVerbs($manageGroup);
+-        })->addMiddleware($this->identityAccessManagement->createManagerAuthorization());
++        
+     }
+     private function routeUsers(RouteCollectorProxy $group): void
+     {
+
+
+38) /app/api/src/infrastructure/routing/Router.php:67    [M] ArrayItemRemoval [ID] 656b2f760a50f5e7281a33b4c152306a
+
+@@ @@
+     }
+     private function routeUsers(RouteCollectorProxy $group): void
+     {
+-        $group->post(pattern: '/user/new', callable: [$this->context->userManagement()->registration(), 'registerUser']);
++        $group->post(pattern: '/user/new', callable: ['registerUser']);
+         $group->post(pattern: '/user', callable: [$this->context->userManagement()->login(), 'run']);
+     }
+     private function trainWords(RouteCollectorProxy $group): void
+
+
+39) /app/api/src/infrastructure/routing/Router.php:71    [M] ArrayItemRemoval [ID] 86983ac78c05ff58e901dba37d4259ff
+
+@@ @@
+     private function routeUsers(RouteCollectorProxy $group): void
+     {
+         $group->post(pattern: '/user/new', callable: [$this->context->userManagement()->registration(), 'registerUser']);
+-        $group->post(pattern: '/user', callable: [$this->context->userManagement()->login(), 'run']);
++        $group->post(pattern: '/user', callable: ['run']);
+     }
+     private function trainWords(RouteCollectorProxy $group): void
+     {
+
+
+40) /app/api/src/manager/infrastructure/persistence/SqlUniquenessPolicy.php:31    [M] MethodCallRemoval [ID] 4d52416b6842aab9b3ea6a086b4b0fb1
+
+@@ @@
+     public function ensureVocabularyIsNotAlreadyPersisted(?Id $id, German $german, Norsk $norsk): void
+     {
+         $params = Parameters::init();
+-        $params->addString($german->asString());
++        
+         $alreadyExistingGermanSql = LookForExistingGermanVocabularySql::create($this->vocabularyType, $id);
+         $germanResult = $this->dbConnector->getResult($alreadyExistingGermanSql, $params);
+         $params->addString($norsk->asString());
+
+
+41) /app/api/src/manager/infrastructure/persistence/SqlUniquenessPolicy.php:35    [M] MethodCallRemoval [ID] 42ca822b749804ceda02591f6b910de8
+
+@@ @@
+         $params->addString($german->asString());
+         $alreadyExistingGermanSql = LookForExistingGermanVocabularySql::create($this->vocabularyType, $id);
+         $germanResult = $this->dbConnector->getResult($alreadyExistingGermanSql, $params);
+-        $params->addString($norsk->asString());
++        
+         $alreadyExistingTupleSql = LookForExistingGermanAndNorskVocabularyTupleSql::create($this->vocabularyType, $id);
+         $tupleResult = $this->dbConnector->getResult($alreadyExistingTupleSql, $params);
+         $identifier = $this->getIdentifier($id, $german, $norsk);
+
+
+42) /app/api/src/shared/domain/German.php:33    [M] LessThan [ID] 3a30be1d7a46291520bb313e7eb904fc
+
+@@ @@
+     private static function ensureIsNotEmpty(string $string): void
+     {
+         $strlen = strlen($string);
+-        if ($strlen < self::SHORTEST_WORD) {
++        if ($strlen <= self::SHORTEST_WORD) {
+             throw new InvalidArgumentException('German has at least two chars.', ResponseCode::unprocessable->value);
+         }
+     }
+
+
+43) /app/api/src/shared/domain/Vocabularies.php:69    [M] UnwrapUcFirst [ID] 85ec3df0e9c208ab547f691018a50fbd
+
+@@ @@
+             return ucfirst(VocabularyType::word->value);
+         }
+         if ($vocabulary instanceof TrainingVerb) {
+-            return ucfirst(VocabularyType::verb->value);
++            return VocabularyType::verb->value;
+         }
+         throw new LogicException('Vocabulary type has to be TrainingWord or TrainingVerb');
+     }
+
+
+44) /app/api/src/shared/infrastructure/http/response/exceptionMapper/LoginExceptionMapper.php:22    [M] MatchArmRemoval [ID] 9f93801c07908ddef3a07a7d45f6bd93
+
+@@ @@
+     {
+         $code = $throwable->getCode();
+         return match (true) {
+-            $throwable instanceof ParameterMissingException, $code === ResponseCode::badRequest->value => self::parameterMissingResponse($url, $throwable),
++            $code === ResponseCode::badRequest->value => self::parameterMissingResponse($url, $throwable),
+             $code === ResponseCode::unauthorized->value => self::credentialsAreInvalidOrUserDoesNotExistResponse($url, $throwable),
+             $code === ResponseCode::forbidden->value => self::noActiveUserResponse($url, $throwable),
+             $code === ResponseCode::unprocessable->value => self::inputNotValidResponse($url, $throwable),
+
+
+45) /app/api/src/trainer/domain/RandomGenerator.php:40    [M] MethodCallRemoval [ID] d1a3f4ec69d90e3155d02105d06457e3
+
+@@ @@
+         $possibilities = [];
+         /** @var TrainingWord|TrainingVerb $vocabulary */
+         foreach ($allVocabulariesForUser as $vocabulary) {
+-            $this->ensureIsNotManaging($vocabulary);
++            
+             $successCounter = $vocabulary->getSuccessCounter();
+             $vocabularyId = $vocabulary->getId()->asInt();
+             if ($successCounter->isInitial()) {
+
+
+46) /app/api/src/trainer/domain/RandomGenerator.php:57    [M] Throw_ [ID] a07b9aa9bd94d8efa8ad6f6c71353456
+
+@@ @@
+     private function ensureIsNotManaging(TrainingVocabulary $vocabulary): void
+     {
+         if (!$vocabulary instanceof TrainingWord && !$vocabulary instanceof TrainingVerb) {
+-            throw new LogicException('Vocabulary type has to be TrainingWord or TrainingVerb');
++            new LogicException('Vocabulary type has to be TrainingWord or TrainingVerb');
+         }
+     }
+     private function unratedVocabulariesHaveHighestPossibilityWeight(array $possibilities, int $vocabularyId): array
+
+
+47) /app/api/src/trainer/domain/RandomGenerator.php:64    [M] IncrementInteger [ID] 82d3a19fb18fbcb99d925e4daf006263
+
+@@ @@
+     }
+     private function unratedVocabulariesHaveHighestPossibilityWeight(array $possibilities, int $vocabularyId): array
+     {
+-        $possibilities[$vocabularyId] = 1;
++        $possibilities[$vocabularyId] = 2;
+         return $possibilities;
+     }
+     private function reverseWeightForPossibilities(SuccessCounter $successCounter, array $possibilities, int $vocabularyId): array
+
+
+48) /app/api/src/trainer/domain/RandomGenerator.php:75    [M] DecrementInteger [ID] bd7ace0b8881a90e4c3a3685c485235f
+
+@@ @@
+     }
+     private function reverseWeightForPossibilities(SuccessCounter $successCounter, array $possibilities, int $vocabularyId): array
+     {
+-        $possibilities[$vocabularyId] = 1 / $successCounter->asInt();
++        $possibilities[$vocabularyId] = 0 / $successCounter->asInt();
+         return $possibilities;
+     }
+     private function normalizePossibilitiesInPerCent(array $possibilities): array
+
+
+49) /app/api/src/trainer/domain/RandomGenerator.php:100    [M] LessThanOrEqualTo [ID] 4c63615e1f1aec4fa7fe30871e54bd18
+
+@@ @@
+         $counter = 0;
+         foreach ($possibilities as $vocabularyId => $possibility) {
+             $counter += $possibility;
+-            if ($randomInt <= $counter) {
++            if ($randomInt < $counter) {
+                 return $vocabularyId;
+             }
+         }
+
+
+50) /app/api/src/trainer/domain/RandomGenerator.php:105    [M] Concat [ID] a602f640b82813e5bf63df188744eb2e
+
+@@ @@
+                 return $vocabularyId;
+             }
+         }
+-        throw new OutOfBoundsException('No Vocabulary can be chosen randomly for RandomNumber: ' . $randomInt);
++        throw new OutOfBoundsException($randomInt . 'No Vocabulary can be chosen randomly for RandomNumber: ');
+     }
+ }
+
+
+51) /app/api/src/trainer/domain/RandomGenerator.php:105    [M] ConcatOperandRemoval [ID] a35d5bf096ca7e70461584d2394c6df8
+
+@@ @@
+                 return $vocabularyId;
+             }
+         }
+-        throw new OutOfBoundsException('No Vocabulary can be chosen randomly for RandomNumber: ' . $randomInt);
++        throw new OutOfBoundsException('No Vocabulary can be chosen randomly for RandomNumber: ');
+     }
+ }
+
+
+52) /app/api/src/trainer/domain/SuccessCounter.php:40    [M] Concat [ID] d9794711eb6e5fef0a1e6cf0ecff2a3f
+
+@@ @@
+     private static function ensureOnlyPositives(int $number): void
+     {
+         if ($number < 0) {
+-            throw new OutOfRangeException('Given SuccessCounter is not a positive number: ' . $number, ResponseCode::unprocessable->value);
++            throw new OutOfRangeException($number . 'Given SuccessCounter is not a positive number: ', ResponseCode::unprocessable->value);
+         }
+     }
+     public function isInitial(): bool
+
+
+53) /app/api/src/trainer/domain/SuccessCounter.php:40    [M] ConcatOperandRemoval [ID] aa6dd0069e7ab44953f0ee0bc4166a7f
+
+@@ @@
+     private static function ensureOnlyPositives(int $number): void
+     {
+         if ($number < 0) {
+-            throw new OutOfRangeException('Given SuccessCounter is not a positive number: ' . $number, ResponseCode::unprocessable->value);
++            throw new OutOfRangeException('Given SuccessCounter is not a positive number: ', ResponseCode::unprocessable->value);
+         }
+     }
+     public function isInitial(): bool
+
+
+54) /app/api/src/trainer/infrastructure/persistence/VerbTrainingReader.php:46    [M] Foreach_ [ID] 62bafe7886f00a1642b76830732d796e
+
+@@ @@
+         $result = $this->dbConnector->getResult($this->allVerbsForUser, $params);
+         $this->ensureDatabaseHasAnyVerbs($result);
+         $verbs = Vocabularies::create();
+-        foreach ($result as $verbRecord) {
++        foreach ([] as $verbRecord) {
+             $verb = TrainingVerb::of(Id::by($verbRecord['id']), German::of($verbRecord['german']), Norsk::of($verbRecord['norsk']), Norsk::of($verbRecord['norsk_present']), Norsk::of($verbRecord['norsk_past']), Norsk::of($verbRecord['norsk_past_perfekt']), SuccessCounter::by($verbRecord['successCounter']));
+             $verbs->add($verb);
+         }
+
+
+55) /app/api/src/trainer/infrastructure/persistence/VerbTrainingReader.php:56    [M] MethodCallRemoval [ID] 0df7029101c7943a477aaa8423a27d2f
+
+@@ @@
+         $verbs = Vocabularies::create();
+         foreach ($result as $verbRecord) {
+             $verb = TrainingVerb::of(Id::by($verbRecord['id']), German::of($verbRecord['german']), Norsk::of($verbRecord['norsk']), Norsk::of($verbRecord['norsk_present']), Norsk::of($verbRecord['norsk_past']), Norsk::of($verbRecord['norsk_past_perfekt']), SuccessCounter::by($verbRecord['successCounter']));
+-            $verbs->add($verb);
++            
+         }
+         return $verbs;
+     }
+
+
+56) /app/api/src/trainer/infrastructure/persistence/WordTrainingReader.php:46    [M] Foreach_ [ID] c8bafcc3277991121649375ca959547a
+
+@@ @@
+         $result = $this->dbConnector->getResult($this->allWordsForUser, $params);
+         $this->ensureDatabaseHasAnyWords($result);
+         $words = Vocabularies::create();
+-        foreach ($result as $wordRecord) {
++        foreach ([] as $wordRecord) {
+             $word = TrainingWord::of(Id::by($wordRecord['id']), German::of($wordRecord['german']), Norsk::of($wordRecord['norsk']), SuccessCounter::by($wordRecord['successCounter']));
+             $words->add($word);
+         }
+
+
+57) /app/api/src/trainer/infrastructure/persistence/WordTrainingReader.php:53    [M] MethodCallRemoval [ID] fe7e9346c784fa10533e9478583c1d78
+
+@@ @@
+         $words = Vocabularies::create();
+         foreach ($result as $wordRecord) {
+             $word = TrainingWord::of(Id::by($wordRecord['id']), German::of($wordRecord['german']), Norsk::of($wordRecord['norsk']), SuccessCounter::by($wordRecord['successCounter']));
+-            $words->add($word);
++            
+         }
+         return $words;
+     }
+
+
+58) /app/api/src/user/domain/valueObjects/InputPassword.php:37    [M] LessThan [ID] d942f575e4cad2f940ccca1c10cad6b9
+
+@@ @@
+     }
+     private static function ensureIsLongEnough(string $trimmed): void
+     {
+-        if (strlen($trimmed) < self::MIN_LENGTH) {
++        if (strlen($trimmed) <= self::MIN_LENGTH) {
+             throw new InvalidArgumentException(sprintf('The password must be at least %d characters long.', self::MIN_LENGTH), ResponseCode::unprocessable->value);
+         }
+     }
+
+
+59) /app/api/src/user/domain/valueObjects/PasswordHash.php:43    [M] LessThan [ID] 4fe9a2093f3930b31afd252fc2498b3c
+
+@@ @@
+     }
+     private static function ensureIsLongEnough(string $password): void
+     {
+-        if (strlen($password) < self::MIN_PASSWORD_LENGTH) {
++        if (strlen($password) <= self::MIN_PASSWORD_LENGTH) {
+             throw new PasswordIsInvalidException('Password is too short', ResponseCode::unprocessable->value);
+         }
+     }
+
+
+60) /app/api/src/user/domain/valueObjects/PasswordHash.php:55    [M] MethodCallRemoval [ID] 0625b54517aad2eb044bc86099e2ec73
+
+@@ @@
+     private static function generateHash(string $password, PasswordVector $passwordVector): string
+     {
+         $salt = $passwordVector->getSalt();
+-        $salt->generate();
++        
+         $pepper = $passwordVector->getPepper();
+         $passwordWithSaltAndPepper = $password . $salt->asString() . $pepper->asString();
+         $hashedPassword = password_hash($passwordWithSaltAndPepper, PASSWORD_BCRYPT);
+
+
+61) /app/api/src/user/domain/valueObjects/PasswordHash.php:58    [M] Concat [ID] bec5ba599e1cd30c80b0d20c9927674d
+
+@@ @@
+         $salt = $passwordVector->getSalt();
+         $salt->generate();
+         $pepper = $passwordVector->getPepper();
+-        $passwordWithSaltAndPepper = $password . $salt->asString() . $pepper->asString();
++        $passwordWithSaltAndPepper = $salt->asString() . $password . $pepper->asString();
+         $hashedPassword = password_hash($passwordWithSaltAndPepper, PASSWORD_BCRYPT);
+         self::addRandomMillisecondsForAttacker();
+         return $hashedPassword;
+
+
+62) /app/api/src/user/domain/valueObjects/PasswordHash.php:58    [M] ConcatOperandRemoval [ID] 7e3439146b3aac0b1a255660b41ff351
+
+@@ @@
+         $salt = $passwordVector->getSalt();
+         $salt->generate();
+         $pepper = $passwordVector->getPepper();
+-        $passwordWithSaltAndPepper = $password . $salt->asString() . $pepper->asString();
++        $passwordWithSaltAndPepper = $salt->asString() . $pepper->asString();
+         $hashedPassword = password_hash($passwordWithSaltAndPepper, PASSWORD_BCRYPT);
+         self::addRandomMillisecondsForAttacker();
+         return $hashedPassword;
+
+
+63) /app/api/src/user/domain/valueObjects/PasswordHash.php:58    [M] ConcatOperandRemoval [ID] 80a78368b9ba1cb8a1d2bd2b303b5c2f
+
+@@ @@
+         $salt = $passwordVector->getSalt();
+         $salt->generate();
+         $pepper = $passwordVector->getPepper();
+-        $passwordWithSaltAndPepper = $password . $salt->asString() . $pepper->asString();
++        $passwordWithSaltAndPepper = $password . $pepper->asString();
+         $hashedPassword = password_hash($passwordWithSaltAndPepper, PASSWORD_BCRYPT);
+         self::addRandomMillisecondsForAttacker();
+         return $hashedPassword;
+
+
+64) /app/api/src/user/domain/valueObjects/PasswordHash.php:58    [M] Concat [ID] e82c8f4cb1d0301fe539731627cdb974
+
+@@ @@
+         $salt = $passwordVector->getSalt();
+         $salt->generate();
+         $pepper = $passwordVector->getPepper();
+-        $passwordWithSaltAndPepper = $password . $salt->asString() . $pepper->asString();
++        $passwordWithSaltAndPepper = $password . $pepper->asString() . $salt->asString();
+         $hashedPassword = password_hash($passwordWithSaltAndPepper, PASSWORD_BCRYPT);
+         self::addRandomMillisecondsForAttacker();
+         return $hashedPassword;
+
+
+65) /app/api/src/user/domain/valueObjects/PasswordHash.php:58    [M] ConcatOperandRemoval [ID] 595a13bdb8c209ea27f496c2e88cf9b2
+
+@@ @@
+         $salt = $passwordVector->getSalt();
+         $salt->generate();
+         $pepper = $passwordVector->getPepper();
+-        $passwordWithSaltAndPepper = $password . $salt->asString() . $pepper->asString();
++        $passwordWithSaltAndPepper = $password . $salt->asString();
+         $hashedPassword = password_hash($passwordWithSaltAndPepper, PASSWORD_BCRYPT);
+         self::addRandomMillisecondsForAttacker();
+         return $hashedPassword;
+
+
+66) /app/api/src/user/domain/valueObjects/PasswordHash.php:61    [M] MethodCallRemoval [ID] 880e27039de3fcb5a5f07187353b2b23
+
+@@ @@
+         $pepper = $passwordVector->getPepper();
+         $passwordWithSaltAndPepper = $password . $salt->asString() . $pepper->asString();
+         $hashedPassword = password_hash($passwordWithSaltAndPepper, PASSWORD_BCRYPT);
+-        self::addRandomMillisecondsForAttacker();
++        
+         return $hashedPassword;
+     }
+     private static function addRandomMillisecondsForAttacker(): void
+
+
+67) /app/api/src/user/domain/valueObjects/PasswordHash.php:69    [M] FunctionCallRemoval [ID] df2abc36dc1c15a35277039650f46ff9
+
+@@ @@
+     }
+     private static function addRandomMillisecondsForAttacker(): void
+     {
+-        usleep(random_int(self::SECONDS_0_1, self::SECONDS_0_5));
++        
+     }
+     public static function by(string $passwordHash): self
+     {
+
+
+68) /app/api/src/user/domain/valueObjects/PasswordHash.php:100    [M] Concat [ID] 5314e7877222479143a3a2adb19f9fda
+
+@@ @@
+     {
+         $storedSalt = $passwordVector->getSalt();
+         $pepper = $passwordVector->getPepper();
+-        $inputHash = $inputPassword->asString() . $storedSalt->asString() . $pepper->asString();
++        $inputHash = $inputPassword->asString() . $pepper->asString() . $storedSalt->asString();
+         if (self::inputPasswordDoesNotMatchSavedHash($inputHash, $storedHash)) {
+             throw new CredentialsAreInvalidException();
+         }
+
+
+69) /app/api/src/user/domain/valueObjects/PasswordHash.php:100    [M] ConcatOperandRemoval [ID] 7aab321efd728946aec4303448d7c5e3
+
+@@ @@
+     {
+         $storedSalt = $passwordVector->getSalt();
+         $pepper = $passwordVector->getPepper();
+-        $inputHash = $inputPassword->asString() . $storedSalt->asString() . $pepper->asString();
++        $inputHash = $inputPassword->asString() . $storedSalt->asString();
+         if (self::inputPasswordDoesNotMatchSavedHash($inputHash, $storedHash)) {
+             throw new CredentialsAreInvalidException();
+         }
+
+
+70) /app/api/src/user/domain/valueObjects/Salt.php:30    [M] UnwrapTrim [ID] 8c765b04cd8e9cbfd1db379db9e6bfc4
+
+@@ @@
+     }
+     public static function by(string $salt): self
+     {
+-        $trimmed = trim($salt);
++        $trimmed = $salt;
+         self::ensureIsNotEmpty($trimmed);
+         self::ensureIs32CharsLong($trimmed);
+         return new self(SanitizedClientInput::of($salt)->asString());
+
+
+71) /app/api/src/user/domain/valueObjects/Salt.php:48    [M] LessThan [ID] 06a87e0b3632868bf94195cdcb7a1762
+
+@@ @@
+     }
+     private static function ensureIs32CharsLong(string $salt): void
+     {
+-        if (strlen($salt) < self::LENGTH) {
++        if (strlen($salt) <= self::LENGTH) {
+             throw new InvalidArgumentException('Salt does not have at least 32 characters');
+         }
+     }
+
+
+72) /app/api/src/user/domain/valueObjects/UserName.php:34    [M] GreaterThan [ID] 882b093688b169d7b36911b5713b6e75
+
+@@ @@
+     }
+     private static function ensureHasValidLength(string $trimmed): void
+     {
+-        if (strlen($trimmed) < self::MIN_LENGTH || strlen($trimmed) > self::MAX_LENGTH) {
++        if (strlen($trimmed) < self::MIN_LENGTH || strlen($trimmed) >= self::MAX_LENGTH) {
+             throw new InvalidArgumentException(sprintf('The username must be between %d and %d characters long.', self::MIN_LENGTH, self::MAX_LENGTH), ResponseCode::unprocessable->value);
+         }
+     }
+
+
+73) /app/api/src/user/infrastructure/identityAccessManagement/EnhancedClock.php:25    [M] ConcatOperandRemoval [ID] 429a2a64799212fbc7e68a9faa4615bf
+
+@@ @@
+     }
+     public function addSeconds(int $seconds): DateTimeImmutable
+     {
+-        return $this->clock->now()->modify('+' . $seconds . ' seconds');
++        return $this->clock->now()->modify($seconds . ' seconds');
+     }
+     public function getTimestamp(): int
+     {
+
+
+74) /app/api/src/user/infrastructure/identityAccessManagement/authentication/AuthenticationAlgorithm.php:39    [M] ArrayItemRemoval [ID] 00510b0833412b7f182cc4e232b12005
 
 @@ @@
       */
@@ -66,20 +970,7 @@ Escaped mutants:
      {
 
 
-6) /app/api/src/app/identityAccessManagement/Clock.php:30    [M] ConcatOperandRemoval
-
-@@ @@
-     }
-     public function addSeconds(int $seconds): self
-     {
--        $newTime = $this->clock->modify('+' . $seconds . ' seconds');
-+        $newTime = $this->clock->modify($seconds . ' seconds');
-         $newTime = $newTime->setTimezone(new DateTimeZone(self::EUROPE_BERLIN));
-         return new self($newTime);
-     }
-
-
-7) /app/api/src/app/identityAccessManagement/JsonWebToken.php:26    [M] PregMatchRemoveCaret
+75) /app/api/src/user/infrastructure/identityAccessManagement/jwt/JsonWebToken.php:26    [M] PregMatchRemoveCaret [ID] cf45544599f5cc57d61bd95b1a6b0447
 
 @@ @@
      }
@@ -92,7 +983,7 @@ Escaped mutants:
      }
 
 
-8) /app/api/src/app/identityAccessManagement/JsonWebToken.php:26    [M] PregMatchRemoveDollar
+76) /app/api/src/user/infrastructure/identityAccessManagement/jwt/JsonWebToken.php:26    [M] PregMatchRemoveDollar [ID] ee82aa668ce9a56bec19e588d14ab90d
 
 @@ @@
      }
@@ -105,7 +996,7 @@ Escaped mutants:
      }
 
 
-9) /app/api/src/app/identityAccessManagement/JwtManagement.php:92    [M] Concat
+77) /app/api/src/user/infrastructure/identityAccessManagement/jwt/JwtManagement.php:93    [M] Concat [ID] 9a203211b6b5f1c64c587ee3e12a446f
 
 @@ @@
          } catch (Throwable $throwable) {
@@ -118,7 +1009,7 @@ Escaped mutants:
                  default => throw new RuntimeException('Invalid token: ' . $throwable->getMessage()),
 
 
-10) /app/api/src/app/identityAccessManagement/JwtManagement.php:92    [M] ConcatOperandRemoval
+78) /app/api/src/user/infrastructure/identityAccessManagement/jwt/JwtManagement.php:93    [M] ConcatOperandRemoval [ID] 67a57c4cd750104c78a4d13966d8fc8c
 
 @@ @@
          } catch (Throwable $throwable) {
@@ -131,7 +1022,7 @@ Escaped mutants:
                  default => throw new RuntimeException('Invalid token: ' . $throwable->getMessage()),
 
 
-11) /app/api/src/app/identityAccessManagement/JwtManagement.php:95    [M] Concat
+79) /app/api/src/user/infrastructure/identityAccessManagement/jwt/JwtManagement.php:96    [M] Concat [ID] 067457a19d993a00c22470b89309a5ce
 
 @@ @@
              $this->logger->error($throwable);
@@ -144,7 +1035,7 @@ Escaped mutants:
              };
 
 
-12) /app/api/src/app/identityAccessManagement/JwtManagement.php:95    [M] ConcatOperandRemoval
+80) /app/api/src/user/infrastructure/identityAccessManagement/jwt/JwtManagement.php:96    [M] ConcatOperandRemoval [ID] 6a70603544c959a2ca64498e97b593ba
 
 @@ @@
              $this->logger->error($throwable);
@@ -157,7 +1048,7 @@ Escaped mutants:
              };
 
 
-13) /app/api/src/app/identityAccessManagement/JwtManagement.php:98    [M] Concat
+81) /app/api/src/user/infrastructure/identityAccessManagement/jwt/JwtManagement.php:99    [M] Concat [ID] 216a333713aab39252432799ee76b863
 
 @@ @@
              return match (true) {
@@ -170,7 +1061,7 @@ Escaped mutants:
          }
 
 
-14) /app/api/src/app/identityAccessManagement/JwtManagement.php:98    [M] ConcatOperandRemoval
+82) /app/api/src/user/infrastructure/identityAccessManagement/jwt/JwtManagement.php:99    [M] ConcatOperandRemoval [ID] 0148b7c110c77b65639191d9432c813d
 
 @@ @@
              return match (true) {
@@ -183,7 +1074,7 @@ Escaped mutants:
          }
 
 
-15) /app/api/src/app/identityAccessManagement/JwtManagement.php:101    [M] Concat
+83) /app/api/src/user/infrastructure/identityAccessManagement/jwt/JwtManagement.php:102    [M] Concat [ID] 78d22716af0fdbbcbcaa688287ea897c
 
 @@ @@
                  $throwable instanceof ExpiredException => throw new RuntimeException('Token expired: ' . $throwable->getMessage()),
@@ -196,7 +1087,7 @@ Escaped mutants:
      }
 
 
-16) /app/api/src/app/identityAccessManagement/JwtManagement.php:101    [M] ConcatOperandRemoval
+84) /app/api/src/user/infrastructure/identityAccessManagement/jwt/JwtManagement.php:102    [M] ConcatOperandRemoval [ID] 460bfb6996b27b153f599326d4b1d9ac
 
 @@ @@
                  $throwable instanceof ExpiredException => throw new RuntimeException('Token expired: ' . $throwable->getMessage()),

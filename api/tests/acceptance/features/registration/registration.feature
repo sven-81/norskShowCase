@@ -21,29 +21,47 @@ Feature: User Registration
   Scenario: Register as a new user with an username that is already taken
     Given there is already a user with the username "heinz"
     When I register with the taken username heinz
-    Then I should get an error 409 '{}'
+    Then I should get an error 409:
+  """
+  {"message":"Duplicate entry 'heinz' for key 'PRIMARY'"}
+  """
 
   Scenario: Register as a new user without username
     Given request is missing username
     When I register
-    Then I should get an error 400 '{"message":"Missing required parameter: username"}'
+    Then I should get an error 400:
+  """
+  {"message":"Missing required parameter: username"}
+  """
 
   Scenario: Register as a new user without firstname
     Given request is missing firstname
     When I register
-    Then I should get an error 400 '{"message":"Missing required parameter: firstName"}'
+    Then I should get an error 400:
+  """
+  {"message":"Missing required parameter: firstName"}
+  """
 
   Scenario: Register as a new user without lastname
     Given request is missing lastname
     When I register
-    Then I should get an error 400 '{"message":"Missing required parameter: lastName"}'
+    Then I should get an error 400:
+  """
+  {"message":"Missing required parameter: lastName"}
+  """
 
   Scenario: Register as a new user without password
     Given request is missing password
     When I register
-    Then I should get an error 400 '{"message":"Missing required parameter: password"}'
+    Then I should get an error 400:
+  """
+  {"message":"Missing required parameter: password"}
+  """
 
   Scenario: Register as a new user with too short password
     Given request has a short password
     When I register
-    Then I should get an error 422 '{"message":"The password must be at least 12 characters long."}'
+    Then I should get an error 422:
+  """
+  {"message":"The password must be at least 12 characters long."}
+  """

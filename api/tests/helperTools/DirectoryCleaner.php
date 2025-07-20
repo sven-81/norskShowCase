@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace norsk\api\helperTools;
 
-use norsk\api\app\config\File;
-use norsk\api\app\config\Path;
+use norsk\api\infrastructure\config\File;
+use norsk\api\infrastructure\config\Path;
 
 class DirectoryCleaner
 {

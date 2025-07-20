@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace norsk\api\tests\provider;
 
-use norsk\api\manager\words\ManagedWord;
-use norsk\api\shared\German;
-use norsk\api\shared\Id;
-use norsk\api\shared\Norsk;
-use norsk\api\trainer\SuccessCounter;
-use norsk\api\trainer\words\TrainingWord;
+use norsk\api\manager\domain\words\ManagedWord;
+use norsk\api\shared\domain\German;
+use norsk\api\shared\domain\Id;
+use norsk\api\shared\domain\Norsk;
+use norsk\api\trainer\domain\SuccessCounter;
+use norsk\api\trainer\domain\words\TrainingWord;
 
 class WordProvider
 {
@@ -40,7 +40,7 @@ class WordProvider
 
     public function buildManagedWord(): ManagedWord
     {
-        return ManagedWord::of(
+        return ManagedWord::fromPersistence(
             $this->id,
             $this->german,
             $this->norsk,

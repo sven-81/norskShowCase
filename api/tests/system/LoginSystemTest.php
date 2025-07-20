@@ -6,12 +6,12 @@ namespace norsk\api;
 
 use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Exception\ServerException;
-use norsk\api\app\config\DbConfig;
-use norsk\api\app\config\Path;
-use norsk\api\app\persistence\GenericSqlStatement;
-use norsk\api\app\persistence\TableName;
 use norsk\api\helperTools\Removable;
-use norsk\api\shared\Json;
+use norsk\api\infrastructure\config\DbConfig;
+use norsk\api\infrastructure\config\Path;
+use norsk\api\infrastructure\persistence\GenericSqlStatement;
+use norsk\api\infrastructure\persistence\TableName;
+use norsk\api\shared\application\Json;
 use norsk\api\tests\stubs\TestClient;
 use norsk\api\tests\stubs\VirtualTestDatabase;
 use PHPUnit\Framework\Attributes\CoversNothing;
@@ -62,10 +62,12 @@ class LoginSystemTest extends TestCase
         $token = file_get_contents(__DIR__ . '/resources/jwts/heinzActiveUserExpired.jwt');
         $expectedJsonHeinz = Json::fromString(
             '{"login":true,"username":"heinz","firstName":"heinz","lastName":"heribert",'
+            . '"tokenType": "Bearer","expiresIn": 7200,'
             . '"token":"' . $token . '"}'
         );
         $expectedJsonOtto = Json::fromString(
             '{"login":true,"username":"Otto","firstName":"Otto","lastName":"Motto",'
+            . '"tokenType": "Bearer","expiresIn": 7200,'
             . '"token":"' . $token . '"}'
         );
 

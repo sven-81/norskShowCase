@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace norsk\api\tests\provider;
 
-use norsk\api\manager\verbs\ManagedVerb;
-use norsk\api\shared\German;
-use norsk\api\shared\Id;
-use norsk\api\shared\Norsk;
-use norsk\api\trainer\SuccessCounter;
-use norsk\api\trainer\verbs\TrainingVerb;
+use norsk\api\manager\domain\verbs\ManagedVerb;
+use norsk\api\shared\domain\German;
+use norsk\api\shared\domain\Id;
+use norsk\api\shared\domain\Norsk;
+use norsk\api\trainer\domain\SuccessCounter;
+use norsk\api\trainer\domain\verbs\TrainingVerb;
 
 class VerbProvider
 {
@@ -49,7 +49,7 @@ class VerbProvider
 
     public function buildManagedVerb(): ManagedVerb
     {
-        return ManagedVerb::of(
+        return ManagedVerb::fromPersistence(
             $this->id,
             $this->german,
             $this->norsk,

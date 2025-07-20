@@ -7,5 +7,5 @@
   "aud": "Norsk Client",
   "scope": "is:manager",
   "nickname": "heinz",
-  "exp": 1855218009
+  "exp": 1855218009 // Sonntag, 15. Oktober 2028 12:20:09 GMT+02:00 DST
 }

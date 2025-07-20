@@ -12,26 +12,23 @@ use Behat\Step\Then;
 use Behat\Step\When;
 use GuzzleHttp\Psr7\Response;
 use GuzzleHttp\Psr7\ServerRequest as Request;
-use norsk\api\app\config\AppConfig;
-use norsk\api\app\config\DbConfig;
-use norsk\api\app\config\Path;
-use norsk\api\app\logging\Logger;
-use norsk\api\app\persistence\DbConnection;
-use norsk\api\app\persistence\GenericSqlStatement;
-use norsk\api\app\persistence\MysqliWrapper;
-use norsk\api\app\persistence\Parameters;
-use norsk\api\app\persistence\TableName;
-use norsk\api\app\response\Url;
-use norsk\api\helperTools\RouteMockHelper;
 use norsk\api\helperTools\Removable;
-use norsk\api\shared\Json;
+use norsk\api\infrastructure\config\AppConfig;
+use norsk\api\infrastructure\config\DbConfig;
+use norsk\api\infrastructure\config\Path;
+use norsk\api\infrastructure\logging\Logger;
+use norsk\api\infrastructure\persistence\DbConnection;
+use norsk\api\infrastructure\persistence\GenericSqlStatement;
+use norsk\api\infrastructure\persistence\MysqliWrapper;
+use norsk\api\infrastructure\persistence\Parameters;
+use norsk\api\infrastructure\persistence\TableName;
+use norsk\api\shared\application\Json;
+use norsk\api\shared\infrastructure\http\response\Url;
+use norsk\api\tests\provider\JwtUserProvider;
 use norsk\api\tests\provider\TestHeader;
 use norsk\api\tests\stubs\VirtualTestDatabase;
-use norsk\api\trainer\RandomGenerator;
-use norsk\api\trainer\RandomNumber;
-use norsk\api\trainer\TrainingWriter;
-use norsk\api\trainer\verbs\VerbReader;
-use norsk\api\trainer\verbs\VerbTrainer;
+use norsk\api\trainer\infrastructure\TrainerFactory;
+use norsk\api\trainer\infrastructure\web\controller\VerbTrainer;
 use PHPUnit\Framework\Assert;
 use Psr\Http\Message\ResponseInterface;
 
@@ -62,7 +59,7 @@ class VerbTrainerDomainContext implements Context
 
     private TableName $verbsSuccessCounterToUsersTable;
 
-    private mixed $logPath;
+    private Path $logPath;
 
     private DbConfig $dbConfig;
 
@@ -77,17 +74,16 @@ class VerbTrainerDomainContext implements Context
         $appConfig = AppConfig::fromPath(
             Path::fromString(__DIR__ . '/resources/configs/appConfig.ini')
         );
-        $randomGenerator = new RandomGenerator(RandomNumber::create());
 
         $mysqli = new MysqliWrapper();
         $database = new DbConnection($mysqli, $this->dbConfig);
-        $verbReader = new VerbReader($database);
-        $trainingWriter = new TrainingWriter($database);
         $this->logPath = $appConfig->getLogPath();
         $logger = Logger::create($this->logPath);
 
         $this->url = Url::by('http://foo');
-        $this->verbTrainer = new VerbTrainer($logger, $randomGenerator, $verbReader, $trainingWriter, $this->url);
+
+        $context = new TrainerFactory($logger, $database, $appConfig);
+        $this->verbTrainer = $context->verbTrainer();
     }
 
 
@@ -99,6 +95,8 @@ class VerbTrainerDomainContext implements Context
         $this->requestHeaders = [
             'Content-Type' => 'application/json',
             'Authorization' => 'Bearer ' . file_get_contents(__DIR__ . '/resources/jwt/heinz.manager.jwt'),
+            'tokenType' => 'Bearer',
+            'expiresIn' => 7200,
         ];
 
         $this->responseHeaders = $this->getTestHeaderAsHeaders($this->url);
@@ -172,17 +170,17 @@ class VerbTrainerDomainContext implements Context
     }
 
 
-    #[When('I like to train a verb as :someone')]
-    public function iLikeToTrainAVerb(): void
+    #[When(':someone likes to train a verb')]
+    public function iLikeToTrainAVerb(string $name): void
     {
-        $this->response = $this->verbTrainer->getVerbToTrain();
+        $this->response = $this->verbTrainer->getVerbToTrain(JwtUserProvider::getUser($name));
     }
 
 
-    #[Then('I should get a random verb to train')]
-    public function iShouldGetARandomVerbToTrain(): void
+    #[Then(':someone should get a random verb to train')]
+    public function SomeoneShouldGetARandomVerbToTrain(string $name): void
     {
-        $this->response = $this->verbTrainer->getVerbToTrain();
+        $this->response = $this->verbTrainer->getVerbToTrain(JwtUserProvider::getUser($name));
 
         $expectedResponseBody = __DIR__ . '/resources/responses/randomVerb.json';
         $expectedResponse = new Response(
@@ -215,15 +213,7 @@ class VerbTrainerDomainContext implements Context
     public function heinzTrainedSuccessfullyANorskVerbWithIdVerb(string $state, string $id): void
     {
         $request = new Request($this->patchMethod, $this->uri, $this->requestHeaders);
-        $parserMock = RouteMockHelper::createRouteParserMock();
-        $resultsMock = RouteMockHelper::createRoutingResultsMock();
-        $routeMock = RouteMockHelper::createRouteMock();
-        $routeMock->method('getArgument')
-            ->willReturn($id);
-
-        $request = $request->withAttribute('__routeParser__', $parserMock);
-        $request = $request->withAttribute('__routingResults__', $resultsMock);
-        $this->request = $request->withAttribute('__route__', $routeMock);
+        $this->request = $request->withAttribute('id', $id);
     }
 
 
@@ -269,11 +259,11 @@ class VerbTrainerDomainContext implements Context
     }
 
 
-    #[Then('heinz should get an error :number :message while :service')]
-    public function heinzShouldGetAnError(string $number, string $message, string $service): void
+    #[Then(':someone should get an error :number :message while :service')]
+    public function someoneShouldGetAnError(string $name, string $number, string $message, string $service): void
     {
         if ($service === 'saving') {
-            $this->theResultIsSaved();
+            $this->theResultIsSavedFor($name);
         }
 
         $expectedResponse = new Response(
@@ -293,10 +283,11 @@ class VerbTrainerDomainContext implements Context
     }
 
 
-    #[When('the result is saved')]
-    public function theResultIsSaved(): void
+    #[When('the result is saved for :someone')]
+    public function theResultIsSavedFor(string $name): void
     {
-        $this->response = $this->verbTrainer->saveSuccess($this->request);
+        $this->integrationDatabase->waitForDatabase();
+        $this->response = $this->verbTrainer->saveSuccess(JwtUserProvider::getUser($name), $this->request);
     }
 
 

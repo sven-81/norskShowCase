@@ -1,0 +1,11 @@
+### Create new User with Bearer-Token
+POST localhost:9997/api/v1/user/new
+Content-Type: application/json
+Authorization: Bearer {{client_token}}
+
+{
+  "username": "test",
+  "firstName": "f",
+  "lastName": "dgdüäößfgd",
+  "password": "123456789pP_"
+}

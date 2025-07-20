@@ -1,0 +1,55 @@
+### GET all Words
+GET localhost:9997/api/v1/manage/words
+Content-Type: application/json
+Authorization: Bearer {{user_token}}
+
+
+### GET all Verbs
+GET localhost:9997/api/v1/manage/verbs
+Content-Type: application/json
+Authorization: Bearer {{user_token}}
+
+
+### Add new word to train
+POST localhost:9997/api/v1/manage/words
+Content-Type: application/json
+Authorization: Bearer {{user_token}}
+
+{"german":"ddd","norsk":"ndd"}
+
+
+### Add new verb to train
+POST localhost:9997/api/v1/manage/verbs
+Content-Type: application/json
+Authorization: Bearer {{user_token}}
+
+{"german":"dff","norsk":"nff","norskPresent":"ffn","norskPast":"nff","norskPastPerfect":"nff"}
+
+
+### Edit word to train
+PUT localhost:9997/api/v1/manage/words/1
+Content-Type: application/json
+Authorization: Bearer {{user_token}}
+
+{"german":"xx","norsk":"xx"}
+
+
+### Edit verb to train
+PUT localhost:9997/api/v1/manage/verbs/1
+Content-Type: application/json
+Authorization: Bearer {{user_token}}
+
+{"german":"xx","norsk":"xx","norskPresent":"xx","norskPast":"xx","norskPastPerfect":"xx"}
+
+
+### Remove word to train
+DELETE localhost:9997/api/v1/manage/words/1
+Content-Type: application/json
+Authorization: Bearer {{user_token}}
+
+
+### Remove verb to train
+DELETE localhost:9997/api/v1/manage/verbs/1
+Content-Type: application/json
+Authorization: Bearer {{user_token}}
+

@@ -12,23 +12,22 @@ use Behat\Step\Then;
 use Behat\Step\When;
 use GuzzleHttp\Psr7\Response;
 use GuzzleHttp\Psr7\ServerRequest as Request;
-use norsk\api\app\config\AppConfig;
-use norsk\api\app\config\DbConfig;
-use norsk\api\app\config\Path;
-use norsk\api\app\logging\Logger;
-use norsk\api\app\persistence\DbConnection;
-use norsk\api\app\persistence\GenericSqlStatement;
-use norsk\api\app\persistence\MysqliWrapper;
-use norsk\api\app\persistence\Parameters;
-use norsk\api\app\persistence\SqlResult;
-use norsk\api\app\persistence\TableName;
-use norsk\api\app\response\Url;
-use norsk\api\helperTools\RouteMockHelper;
 use norsk\api\helperTools\Removable;
-use norsk\api\manager\ManagerWriter;
-use norsk\api\manager\words\WordManager;
-use norsk\api\manager\words\WordReader;
-use norsk\api\shared\Json;
+use norsk\api\infrastructure\config\AppConfig;
+use norsk\api\infrastructure\config\DbConfig;
+use norsk\api\infrastructure\config\Path;
+use norsk\api\infrastructure\logging\Logger;
+use norsk\api\infrastructure\persistence\DbConnection;
+use norsk\api\infrastructure\persistence\GenericSqlStatement;
+use norsk\api\infrastructure\persistence\MysqliWrapper;
+use norsk\api\infrastructure\persistence\Parameters;
+use norsk\api\infrastructure\persistence\SqlResult;
+use norsk\api\infrastructure\persistence\TableName;
+use norsk\api\manager\infrastructure\ManagerFactory;
+use norsk\api\manager\infrastructure\web\controller\WordManager;
+use norsk\api\shared\application\Json;
+use norsk\api\shared\infrastructure\http\response\Url;
+use norsk\api\tests\provider\JwtUserProvider;
 use norsk\api\tests\provider\TestHeader;
 use norsk\api\tests\stubs\VirtualTestDatabase;
 use PHPUnit\Framework\Assert;
@@ -82,13 +81,13 @@ class WordManagerDomainContext implements Context
 
         $mysqli = new MysqliWrapper();
         $database = new DbConnection($mysqli, $this->dbConfig);
-        $wordReader = new WordReader($database);
-        $wordWriter = new ManagerWriter($database);
         $this->logPath = $appConfig->getLogPath();
         $logger = Logger::create($this->logPath);
 
         $this->url = Url::by('http://foo');
-        $this->wordManager = new WordManager($logger, $wordReader, $wordWriter, $this->url);
+
+        $context = new ManagerFactory($logger, $database, $appConfig);
+        $this->wordManager = $context->wordManager();
     }
 
 
@@ -187,16 +186,16 @@ class WordManagerDomainContext implements Context
     }
 
 
-    #[When('I like to get a list of all words as :someone')]
-    public function iLikeToGetAListOfAllWordsAs(): void
+    #[When(':someone likes to get a list of all words')]
+    public function someoneLikesToGetAListOfAllWords(string $name): void
     {
         $this->integrationDatabase->waitForDatabase();
-        $this->response = $this->wordManager->getAllWords();
+        $this->response = $this->wordManager->getAllWords(JwtUserProvider::getUser($name));
     }
 
 
-    #[Then('I should get a list of all words')]
-    public function iShouldGetAListOfAllWords(): void
+    #[Then(':someone should get a list of all words')]
+    public function someoneShouldGetAListOfAllWords(): void
     {
         $expectedResponseFile = __DIR__ . '/resources/responses/allWords.json';
         $expectedResponseBody = file_get_contents($expectedResponseFile);
@@ -246,8 +245,8 @@ class WordManagerDomainContext implements Context
     }
 
 
-    #[Then('heinz should get an error :number :message')]
-    public function heinzShouldGetAnError(string $number, string $message): void
+    #[Then(':someone should get an error :number :message')]
+    public function someoneShouldGetAnError(string $name, string $number, string $message): void
     {
         $expectedResponse = new Response(
             (int)$number,
@@ -266,54 +265,42 @@ class WordManagerDomainContext implements Context
     }
 
 
-    #[When('I like to edit a :language word with id :number')]
-    public function iLikeToEditAWordAs(string $language, string $id): void
+    #[When(':someone likes to edit a :language word with id :number')]
+    public function someoneLikesToEditAWordAs(string $name, string $language, string $id): void
     {
-        $request = new Request($this->putMethod, $this->uri, $this->requestHeaders);
-        $parserMock = RouteMockHelper::createRouteParserMock();
-        $resultsMock = RouteMockHelper::createRoutingResultsMock();
-        $routeMock = RouteMockHelper::createRouteMock();
-        $routeMock->method('getArgument')
-            ->willReturn($id);
-
-        $request = $request->withAttribute('__routeParser__', $parserMock);
-        $request = $request->withAttribute('__routingResults__', $resultsMock);
-        $request = $request->withAttribute('__route__', $routeMock);
-
-        match ($language) {
-            'german only' => $body = '{"german":"neu","norsk":"skjærgård"}',
-            'norsk only' => $body = '{"german":"Schärenküste","norsk":"ny"}',
-            default => $body = '{"german":"neu","norsk":"ny"}',
+        $body = match ($language) {
+            'german only' => '{"german":"neu","norsk":"skjærgård"}',
+            'norsk only' => '{"german":"Schärenküste","norsk":"ny"}',
+            default => '{"german":"neu","norsk":"ny"}',
         };
 
         $bodyArray = Json::fromString($body)->asDecodedJson();
-        $this->request = $request->withParsedBody($bodyArray);
 
-        $this->response = $this->wordManager->update($this->request);
+        $request = new Request($this->putMethod, $this->uri, $this->requestHeaders);
+        $this->request = $request
+            ->withAttribute('id', $id)
+            ->withParsedBody($bodyArray);
+
+        $this->response = $this->wordManager->update(JwtUserProvider::getUser($name), $this->request);
     }
 
 
-    #[When('I like to edit a word with id 3 with an already existing :language word :case')]
-    public function iLikeToEditAWordWithIdWithAnAlreadyExistingWord(string $language, string $case): void
-    {
-        $request = new Request($this->putMethod, $this->uri, $this->requestHeaders);
-        $parserMock = RouteMockHelper::createRouteParserMock();
-        $resultsMock = RouteMockHelper::createRoutingResultsMock();
-        $routeMock = RouteMockHelper::createRouteMock();
-        $routeMock->method('getArgument')
-            ->willReturn('3');
-
-        $request = $request->withAttribute('__routeParser__', $parserMock);
-        $request = $request->withAttribute('__routingResults__', $resultsMock);
-        $request = $request->withAttribute('__route__', $routeMock);
-
+    #[When(':someone likes to edit a word with id 3 with an already existing :language word :case')]
+    public function someoneLikesToEditAWordWithIdWithAnAlreadyExistingWord(
+        string $name,
+        string $language,
+        string $case
+    ): void {
         $body = $this->getLanguageBody($language, $case);
-
         $bodyArray = Json::fromString($body)->asDecodedJson();
-        $this->request = $request->withParsedBody($bodyArray);
+
+        $request = new Request($this->putMethod, $this->uri, $this->requestHeaders);
+        $this->request = $request
+            ->withAttribute('id', '3')
+            ->withParsedBody($bodyArray);
         $this->integrationDatabase->waitForDatabase();
 
-        $this->response = $this->wordManager->update($this->request);
+        $this->response = $this->wordManager->update(JwtUserProvider::getUser($name), $this->request);
     }
 
 
@@ -338,6 +325,7 @@ class WordManagerDomainContext implements Context
     #[Then('the edited :language word :input should be saved for id :number')]
     public function theEditedWordShouldBeSaved(string $language, string $input, string $id): void
     {
+        $this->integrationDatabase->waitForDatabase();
         $sql = GenericSqlStatement::create(
             'SELECT german, norsk FROM ' . $this->wordsTable->value
             . ' WHERE id = ?;'
@@ -381,22 +369,15 @@ class WordManagerDomainContext implements Context
     }
 
 
-    #[When('I like to delete a word with id :number')]
-    public function iLikeToDeleteAWordWithId(string $id): void
+    #[When(':someone likes to delete a word with id :number')]
+    public function someoneLikeToDeleteAWordWithId(string $name, string $id): void
     {
         $request = new Request($this->putMethod, $this->uri, $this->requestHeaders);
-        $parserMock = RouteMockHelper::createRouteParserMock();
-        $resultsMock = RouteMockHelper::createRoutingResultsMock();
-        $routeMock = RouteMockHelper::createRouteMock();
-        $routeMock->method('getArgument')
-            ->willReturn($id);
+        $this->request = $request->withAttribute('id', $id);
 
-        $request = $request->withAttribute('__routeParser__', $parserMock);
-        $request = $request->withAttribute('__routingResults__', $resultsMock);
-        $this->request = $request->withAttribute('__route__', $routeMock);
         $this->integrationDatabase->waitForDatabase();
 
-        $this->response = $this->wordManager->delete($this->request);
+        $this->response = $this->wordManager->delete(JwtUserProvider::getUser($name), $this->request);
     }
 
 
@@ -415,8 +396,8 @@ class WordManagerDomainContext implements Context
     }
 
 
-    #[Then('heinz should get a message :code :message')]
-    public function heinzShouldGetAMessage(string $code, string $message): void
+    #[Then(':someone should get a message :code :message')]
+    public function someoneShouldGetAMessage(string $code, string $message): void
     {
         $expectedResponse = new Response(
             (int)$code,
@@ -435,8 +416,8 @@ class WordManagerDomainContext implements Context
     }
 
 
-    #[When('I like to add :state word for :language')]
-    public function iLikeToAddWordFor(string $state, string $language): void
+    #[When(':someone likes to add :state word for :language')]
+    public function someoneLikeToAddWordFor(string $name, string $state, string $language): void
     {
         if ($state === 'a new' && $language === 'german') {
             $this->body = '{"german":"neu","norsk":"bølger"}';
@@ -452,18 +433,13 @@ class WordManagerDomainContext implements Context
             $this->body = '{"german":"neu","norsk":"ny"}';
         }
 
-        $request = new Request($this->putMethod, $this->uri, $this->requestHeaders);
-        $parserMock = RouteMockHelper::createRouteParserMock();
-        $resultsMock = RouteMockHelper::createRoutingResultsMock();
-
-        $request = $request->withAttribute('__routeParser__', $parserMock);
-        $request = $request->withAttribute('__routingResults__', $resultsMock);
-
         $bodyArray = Json::fromString($this->body)->asDecodedJson();
+
+        $request = new Request($this->putMethod, $this->uri, $this->requestHeaders);
         $this->request = $request->withParsedBody($bodyArray);
         $this->integrationDatabase->waitForDatabase();
 
-        $this->response = $this->wordManager->createWord($this->request);
+        $this->response = $this->wordManager->createWord(JwtUserProvider::getUser($name), $this->request);
     }
 
 

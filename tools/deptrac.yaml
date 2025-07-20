@@ -1,0 +1,65 @@
+deptrac:
+  paths:
+    - ../api/src
+  exclude_files:
+    - '#.*test.*#'
+  layers:
+    - name: Domain
+      collectors:
+        - type: classLike
+          value: .*\\domain\\.*
+
+    - name: SharedDomain
+      collectors:
+        - type: classLike
+          value: .*\\shared\\domain\\.*
+
+    - name: Application
+      collectors:
+        - type: classLike
+          value: .*\\application\\.*
+
+    - name: SharedApplication
+      collectors:
+        - type: classLike
+          value: .*\\shared\\application\\.*
+
+    - name: Infrastructure
+      collectors:
+        - type: classLike
+          value: .*\\infrastructure\\(?!web).*
+
+    - name: Web
+      collectors:
+        - type: classLike
+          value: .*\\infrastructure\\web\\.*
+
+  ruleset:
+    Domain:
+      - SharedDomain
+
+    SharedDomain: []
+
+    Application:
+      - Domain
+      - SharedDomain
+
+    SharedApplication:
+      - SharedDomain
+
+    Infrastructure:
+      - Application
+      - Domain
+      - SharedApplication
+      - SharedDomain
+
+    Web:
+      - Infrastructure
+      - Application
+      - Domain
+      - SharedApplication
+      - SharedDomain
+
+  formatters:
+    mermaidjs:
+      direction: TD

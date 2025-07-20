@@ -6,12 +6,12 @@ namespace norsk\api;
 
 use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Exception\ServerException;
-use norsk\api\app\config\DbConfig;
-use norsk\api\app\config\Path;
-use norsk\api\app\persistence\GenericSqlStatement;
-use norsk\api\app\persistence\TableName;
 use norsk\api\helperTools\Removable;
-use norsk\api\shared\Json;
+use norsk\api\infrastructure\config\DbConfig;
+use norsk\api\infrastructure\config\Path;
+use norsk\api\infrastructure\persistence\GenericSqlStatement;
+use norsk\api\infrastructure\persistence\TableName;
+use norsk\api\shared\application\Json;
 use norsk\api\tests\stubs\TestClient;
 use norsk\api\tests\stubs\VirtualTestDatabase;
 use PHPUnit\Framework\Attributes\CoversNothing;
@@ -36,7 +36,27 @@ class WordTrainerSystemTest extends TestCase
 
     private string $methodGet;
 
-    private string $bearerPathClient;
+    private string $clientBearerPath;
+
+    private string $activeUserBearer;
+
+
+    protected function setUp(): void
+    {
+        $dbConfig = DbConfig::fromPath(
+            Path::fromString(__DIR__ . '/resources/config/mySqlConfig.ini')
+        );
+        $this->integrationDatabase = VirtualTestDatabase::create($dbConfig);
+
+        $this->uriGetWords = self::GET_WORDS;
+        $this->uriSaveSuccess = self::SAVE_SUCCESS;
+
+        $this->methodPatch = 'PATCH';
+        $this->methodGet = 'GET';
+
+        $this->clientBearerPath = __DIR__ . '/resources/jwts/userClient.jwt';
+        $this->activeUserBearer = __DIR__ . '/resources/jwts/heinzActiveUser.jwt';
+    }
 
 
     public static function getInvalidMethods(): array
@@ -85,7 +105,7 @@ class WordTrainerSystemTest extends TestCase
 
         $this->prepareDatabase();
 
-        TestClient::createWithoutApiDocValidation($this->bearerPathClient, $method, $uri);
+        TestClient::createWithoutApiDocValidation($this->clientBearerPath, $method, $uri);
     }
 
 
@@ -101,16 +121,21 @@ class WordTrainerSystemTest extends TestCase
 
     public function testCanThrowServerErrorExceptionWhileGettingWords(): void
     {
+        $this->prepareDatabase();
+        $this->damageTableStructure();
+
         $this->expectException(ServerException::class);
         $this->expectExceptionCode(500);
         $this->expectExceptionMessage('500 Internal Server Error');
 
-        TestClient::createWithApiDocValidation($this->bearerPathClient, $this->methodGet, $this->uriGetWords);
+        TestClient::createWithApiDocValidation($this->activeUserBearer, $this->methodGet, $this->uriGetWords);
     }
 
 
     public function testCanThrow404IfWordIsNotFoundForSavingSuccess(): void
     {
+        $this->prepareDatabase();
+
         $this->expectException(ClientException::class);
         $this->expectExceptionCode(404);
         $this->expectExceptionMessage(
@@ -119,7 +144,7 @@ class WordTrainerSystemTest extends TestCase
         );
 
         TestClient::createWithApiDocValidation(
-            $this->bearerPathClient,
+            $this->activeUserBearer,
             $this->methodPatch,
             $this->uriSaveSuccess . '11'
         );
@@ -138,7 +163,11 @@ class WordTrainerSystemTest extends TestCase
         $this->prepareDatabase();
         $bearer = __DIR__ . '/resources/jwts/heinzActiveUserExpired.jwt';
 
-        TestClient::createWithApiDocValidation($bearer, $this->methodPatch, $this->uriSaveSuccess . '1');
+        TestClient::createWithApiDocValidation(
+            $bearer,
+            $this->methodPatch,
+            uri: $this->uriSaveSuccess . '1'
+        );
     }
 
 
@@ -149,14 +178,13 @@ class WordTrainerSystemTest extends TestCase
         $this->expectExceptionMessage('500 Internal Server Error');
 
         $this->prepareDatabase();
-        $sql = GenericSqlStatement::create(
-            'ALTER TABLE `wordsSuccessCounterToUsers` DROP COLUMN `successCounter`;'
+        $this->damageTableStructure();
+
+        TestClient::createWithApiDocValidation(
+            $this->activeUserBearer,
+            $this->methodPatch,
+            uri: $this->uriSaveSuccess . '1'
         );
-        $this->integrationDatabase->alter($sql);
-
-        $bearer = __DIR__ . '/resources/jwts/heinzActiveUser.jwt';
-
-        TestClient::createWithApiDocValidation($bearer, $this->methodPatch, $this->uriSaveSuccess . '1');
     }
 
 
@@ -170,9 +198,12 @@ class WordTrainerSystemTest extends TestCase
         );
 
         $this->prepareDatabase();
-        $bearer = __DIR__ . '/resources/jwts/heinzActiveUser.jwt';
 
-        TestClient::createWithoutApiDocValidation($bearer, $this->methodPatch, $this->uriSaveSuccess . 'ab');
+        TestClient::createWithoutApiDocValidation(
+            $this->activeUserBearer,
+            $this->methodPatch,
+            uri: $this->uriSaveSuccess . 'ab'
+        );
     }
 
 
@@ -234,24 +265,19 @@ class WordTrainerSystemTest extends TestCase
     }
 
 
-    protected function setUp(): void
+    private function damageTableStructure(): void
     {
-        $dbConfig = DbConfig::fromPath(
-            Path::fromString(__DIR__ . '/resources/config/mySqlConfig.ini')
+        $sql = GenericSqlStatement::create(
+            'ALTER TABLE `wordsSuccessCounterToUsers` DROP COLUMN `successCounter`;'
         );
-        $this->integrationDatabase = VirtualTestDatabase::create($dbConfig);
-
-        $this->uriGetWords = self::GET_WORDS;
-        $this->uriSaveSuccess = self::SAVE_SUCCESS;
-        $this->methodPatch = 'PATCH';
-        $this->methodGet = 'GET';
-        $this->bearerPathClient = __DIR__ . '/resources/jwts/userClient.jwt';
+        $this->integrationDatabase->alter($sql);
     }
 
 
     protected function tearDown(): void
     {
-        if ($this->name() === 'testCanThrowServerErrorExceptionWhileSavingSuccess') {
+        if ($this->name() === 'testCanThrowServerErrorExceptionWhileSavingSuccess'
+            || $this->name() === 'testCanThrowServerErrorExceptionWhileGettingWords') {
             $this->integrationDatabase->recreate(TableName::wordsSuccessCounterToUsers);
         }
 

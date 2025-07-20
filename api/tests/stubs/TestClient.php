@@ -8,7 +8,7 @@ use Ebln\Guzzle\OpenApi\Middleware as OpenApiMiddleware;
 use GuzzleHttp\Client;
 use GuzzleHttp\HandlerStack;
 use League\OpenAPIValidation\PSR7\ValidatorBuilder;
-use norsk\api\shared\Json;
+use norsk\api\shared\application\Json;
 use Psr\Http\Message\ResponseInterface;
 
 class TestClient
@@ -56,6 +56,8 @@ class TestClient
         $headers = [
             'Content-Type' => 'application/json',
             'Authorization' => 'Bearer ' . file_get_contents($bearerPath),
+            'tokenType' => 'Bearer',
+            'expiresIn' => 7200,
         ];
 
         if ($requestBody !== null) {
