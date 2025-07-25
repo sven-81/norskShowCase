@@ -57,7 +57,9 @@
     "squizlabs/php_codesniffer": "*",
     "rector/rector": "*",
     "infection/infection": "*",
-    "ebln/guzzle-openapi-middleware": "*"
+    "ebln/guzzle-openapi-middleware": "*",
+    "phparkitect/phparkitect": "*",
+    "deptrac/deptrac": "*"
   },
   "config": {
     "allow-plugins": {
