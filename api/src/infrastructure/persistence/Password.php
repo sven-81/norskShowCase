@@ -8,9 +8,9 @@ use InvalidArgumentException;
 use norsk\api\shared\infrastructure\http\response\ResponseCode;
 use SensitiveParameter;
 
-class Password
+readonly class Password
 {
-    private function __construct(private readonly string $password)
+    private function __construct(private string $password)
     {
     }
 

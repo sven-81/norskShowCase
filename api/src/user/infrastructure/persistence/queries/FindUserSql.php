@@ -6,9 +6,9 @@ namespace norsk\api\user\infrastructure\persistence\queries;
 
 use norsk\api\infrastructure\persistence\SqlStatement;
 
-class FindUserSql implements SqlStatement
+readonly class FindUserSql implements SqlStatement
 {
-    private readonly string $sql;
+    private string $sql;
 
 
     private function __construct()

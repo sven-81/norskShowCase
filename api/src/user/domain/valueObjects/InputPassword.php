@@ -6,7 +6,7 @@ namespace norsk\api\user\domain\valueObjects;
 
 use InvalidArgumentException;
 use norsk\api\shared\application\SanitizedClientInput;
-use norsk\api\shared\infrastructure\http\response\ResponseCode;
+use norsk\api\shared\domain\DomainExceptionCode;
 use SensitiveParameter;
 
 readonly class InputPassword
@@ -36,11 +36,8 @@ readonly class InputPassword
     {
         if ((strlen($trimmed) < self::MIN_LENGTH)) {
             throw new InvalidArgumentException(
-                sprintf(
-                    'The password must be at least %d characters long.',
-                    self::MIN_LENGTH
-                ),
-                ResponseCode::unprocessable->value
+                sprintf('The password must be at least %d characters long.', self::MIN_LENGTH),
+                DomainExceptionCode::invalidInput->value
             );
         }
     }
@@ -52,7 +49,7 @@ readonly class InputPassword
         if ($sanitized !== $trimmed) {
             throw new InvalidArgumentException(
                 'Password contains invalid characters: \' or &.',
-                ResponseCode::unprocessable->value
+                DomainExceptionCode::invalidInput->value
             );
         }
 

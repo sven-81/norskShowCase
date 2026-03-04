@@ -9,9 +9,7 @@ use norsk\api\shared\domain\Id;
 use norsk\api\shared\domain\VocabularyPersistencePort;
 use norsk\api\tests\provider\VerbProvider;
 use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
-
 #[CoversClass(ManagedVerb::class)]
 class ManagedVerbTest extends TestCase
 {
@@ -22,8 +20,6 @@ class ManagedVerbTest extends TestCase
     private ManagedVerb $managedVerb;
 
     private ManagedVerb $newVerb;
-
-    private VocabularyPersistencePort|MockObject $writerMock;
 
 
     protected function setUp(): void
@@ -47,14 +43,11 @@ class ManagedVerbTest extends TestCase
             $this->verb->getNorskPast(),
             $this->verb->getNorskPastPerfect()
         );
-
-        $this->writerMock = $this->createMock(VocabularyPersistencePort::class);
     }
 
 
     public function testCanCreateFromPersisted(): void
     {
-        /** @phpstan-ignore-next-line */
         self::assertNotNull($this->managedVerb->getId());
     }
 
@@ -97,21 +90,23 @@ class ManagedVerbTest extends TestCase
 
     public function testPersistWithVocabPersistencePort(): void
     {
-        $this->writerMock->expects($this->once())
+        $writerMock = $this->createMock(VocabularyPersistencePort::class);
+        $writerMock->expects($this->once())
             ->method('saveNewVerb')
             ->with($this->newVerb);
 
-        $this->newVerb->persistWith($this->writerMock);
+        $this->newVerb->persistWith($writerMock);
     }
 
 
     public function testUpdateWithVocabPersistencePort(): void
     {
-        $this->writerMock->expects($this->once())
+        $writerMock = $this->createMock(VocabularyPersistencePort::class);
+        $writerMock->expects($this->once())
             ->method('saveEditedVerb')
             ->with($this->verb);
 
-        $this->verb->updateWith($this->writerMock);
+        $this->verb->updateWith($writerMock);
     }
 
 

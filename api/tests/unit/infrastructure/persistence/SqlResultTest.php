@@ -107,6 +107,7 @@ class SqlResultTest extends TestCase
 
     public function testReturnsTrueIfResultHasAnAmountBySqlCountEntry(): void
     {
+        $array = [];
         $array[0]['match'] = '1';
 
         $this->assertTrue(SqlResult::resultFromArray($array)->hasEntries());
@@ -115,6 +116,7 @@ class SqlResultTest extends TestCase
 
     public function testReturnsFalseIfResultHasNoAmountBySqlCountEntry(): void
     {
+        $array = [];
         $array[0]['match'] = '0';
 
         $this->assertFalse(SqlResult::resultFromArray($array)->hasEntries());

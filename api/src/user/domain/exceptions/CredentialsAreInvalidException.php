@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace norsk\api\user\domain\exceptions;
 
 use InvalidArgumentException;
-use norsk\api\shared\infrastructure\http\response\ResponseCode;
+use norsk\api\shared\domain\DomainExceptionCode;
 
 class CredentialsAreInvalidException extends InvalidArgumentException
 {
@@ -13,7 +13,7 @@ class CredentialsAreInvalidException extends InvalidArgumentException
     {
         parent::__construct(
             'Unauthorized: Cannot verify credentials',
-            ResponseCode::unauthorized->value
+            DomainExceptionCode::unauthorized->value
         );
     }
 }

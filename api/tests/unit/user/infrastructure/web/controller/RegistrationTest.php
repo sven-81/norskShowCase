@@ -37,7 +37,7 @@ class RegistrationTest extends TestCase
 
     private UserRegistration|MockObject $userRegistration;
 
-    private PasswordVector|MockObject $vectorMock;
+    private PasswordVector $vectorStub;
 
 
     protected function setUp(): void
@@ -45,7 +45,7 @@ class RegistrationTest extends TestCase
         $this->url = Url::by('http://ulr');
         $this->loggerMock = $this->createMock(Logger::class);
         $this->userRegistration = $this->createMock(UserRegistration::class);
-        $this->vectorMock = $this->createMock(PasswordVector::class);
+        $this->vectorStub = $this->createStub(PasswordVector::class);
     }
 
 
@@ -59,15 +59,15 @@ class RegistrationTest extends TestCase
             $this->url
         );
 
-        $requestMock = $this->getRequest();
-        $payload = Payload::of($requestMock);
+        $requestStub = $this->getRequestStub();
+        $payload = Payload::of($requestStub);
         $command = RegisterUser::by($payload);
         $user = RegisteredUser::create(
             UserName::by('famous12'),
             FirstName::by('James'),
             LastName::by('Last'),
             InputPassword::by('someVeeeeeryExtraLongSecret'),
-            $this->vectorMock
+            $this->vectorStub
         );
 
         $this->userRegistration->expects($this->once())
@@ -90,11 +90,11 @@ class RegistrationTest extends TestCase
                 }
             );
 
-        $this->assertions($registration, $requestMock, $expectedResponse);
+        $this->assertions($registration, $requestStub, $expectedResponse);
     }
 
 
-    private function getRequest(bool $unset = false): MockObject|ServerRequest
+    private function getRequestStub(bool $unset = false): ServerRequest
     {
         $expectedArray = [
             'username' => 'famous12',
@@ -107,20 +107,20 @@ class RegistrationTest extends TestCase
             unset($expectedArray['firstName']);
         }
 
-        $requestMock = $this->createMock(ServerRequest::class);
-        $requestMock->method('getParsedBody')
+        $requestStub = $this->createStub(ServerRequest::class);
+        $requestStub->method('getParsedBody')
             ->willReturn($expectedArray);
 
-        return $requestMock;
+        return $requestStub;
     }
 
 
     private function assertions(
         Registration $registration,
-        ServerRequest|MockObject $requestMock,
+        ServerRequest $requestStub,
         Response $expectedResponse
     ): void {
-        $response = $registration->registerUser($requestMock);
+        $response = $registration->registerUser($requestStub);
         self::assertSame(
             $expectedResponse->getStatusCode(),
             $response->getStatusCode()
@@ -143,7 +143,7 @@ class RegistrationTest extends TestCase
             $this->url
         );
 
-        $requestMock = $this->getRequest(true);
+        $requestStub = $this->getRequestStub(true);
 
         $this->userRegistration->expects($this->never())
             ->method('handle');
@@ -155,7 +155,7 @@ class RegistrationTest extends TestCase
             ->method('error')
             ->with($throwable);
 
-        $this->assertions($registration, $requestMock, $expectedResponse);
+        $this->assertions($registration, $requestStub, $expectedResponse);
     }
 
 
@@ -170,7 +170,7 @@ class RegistrationTest extends TestCase
             $this->url
         );
 
-        $requestMock = $this->getRequest();
+        $requestStub = $this->getRequestStub();
 
         $this->userRegistration->expects($this->once())
             ->method('handle')
@@ -183,7 +183,7 @@ class RegistrationTest extends TestCase
             ->method('error')
             ->with($throwable);
 
-        $this->assertions($registration, $requestMock, $expectedResponse);
+        $this->assertions($registration, $requestStub, $expectedResponse);
     }
 
 
@@ -198,7 +198,7 @@ class RegistrationTest extends TestCase
             $this->url
         );
 
-        $requestMock = $this->getRequest();
+        $requestStub = $this->getRequestStub();
 
         $this->userRegistration->expects($this->once())
             ->method('handle')
@@ -211,7 +211,7 @@ class RegistrationTest extends TestCase
             ->method('error')
             ->with($throwable);
 
-        $this->assertions($registration, $requestMock, $expectedResponse);
+        $this->assertions($registration, $requestStub, $expectedResponse);
     }
 
 
@@ -226,7 +226,7 @@ class RegistrationTest extends TestCase
             $this->url
         );
 
-        $requestMock = $this->getRequest();
+        $requestStub = $this->getRequestStub();
 
         $this->userRegistration->expects($this->once())
             ->method('handle')
@@ -239,6 +239,6 @@ class RegistrationTest extends TestCase
             ->method('error')
             ->with($throwable);
 
-        $this->assertions($registration, $requestMock, $expectedResponse);
+        $this->assertions($registration, $requestStub, $expectedResponse);
     }
 }

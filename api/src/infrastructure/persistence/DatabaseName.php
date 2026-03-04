@@ -7,9 +7,9 @@ namespace norsk\api\infrastructure\persistence;
 use InvalidArgumentException;
 use norsk\api\shared\infrastructure\http\response\ResponseCode;
 
-class DatabaseName
+readonly class DatabaseName
 {
-    private function __construct(private readonly string $name)
+    private function __construct(private string $name)
     {
     }
 

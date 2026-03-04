@@ -19,12 +19,12 @@ use norsk\api\trainer\infrastructure\persistence\WordTrainingReader;
 use norsk\api\trainer\infrastructure\web\controller\VerbTrainer;
 use norsk\api\trainer\infrastructure\web\controller\WordTrainer;
 
-class TrainerFactory
+readonly class TrainerFactory
 {
     public function __construct(
-        private readonly Logger $logger,
-        private readonly DbConnection $dbConnection,
-        private readonly AppConfig $appConfig
+        private Logger $logger,
+        private DbConnection $dbConnection,
+        private AppConfig $appConfig
     ) {
     }
 

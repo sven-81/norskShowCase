@@ -7,6 +7,8 @@ info:
     email: my@mail.de
 servers:
   - url: 'https://myDomain.de/api/v1'
+security:
+  - norsk_user_auth: [ ]
 tags:
   - name: user
     description: Operations about user
@@ -36,6 +38,8 @@ paths:
           description: "Conflict: user already exists"
         '500':
           description: "server error"
+      security:
+        - norsk_client_auth: [ ]
   /user:
     post:
       tags:
@@ -63,6 +67,8 @@ paths:
           description: "Forbidden: user is not active"
         '500':
           description: "server error"
+      security:
+        - norsk_client_auth: [ ]
 
   /train/words:
     get:
@@ -86,10 +92,6 @@ paths:
           description: "Forbidden: user is not active"
         '500':
           description: "server error"
-      security:
-        - norsktrainer_auth:
-            - write:norsk
-            - read:norsk
 
   /train/words/{wordId}:
     patch:
@@ -142,10 +144,6 @@ paths:
           description: "Forbidden: user is not active"
         '500':
           description: "server error"
-      security:
-        - norsktrainer_auth:
-            - write:norsk
-            - read:norsk
 
   /train/verbs/{verbId}:
     patch:
@@ -260,7 +258,7 @@ paths:
         - norsk-manager
       summary: removes word from the manager by id
       description: removes word from the manager by id
-      operationId: wordId
+      operationId: deleteWordById
       parameters:
         - name: wordId
           in: path
@@ -275,8 +273,10 @@ paths:
           content:
             application/json:
               schema:
-                message:
-                  type: string
+                type: object
+                properties:
+                  message:
+                    type: string
         '400':
           description: Invalid wordId supplied
         '401':
@@ -337,7 +337,7 @@ paths:
         - norsk-manager
       summary: save edited verb in the manager by id
       description: save edited verb in the manager by id
-      operationId: verbId
+      operationId: deleteVerbById
       parameters:
         - name: verbId
           in: path
@@ -387,8 +387,10 @@ paths:
           content:
             application/json:
               schema:
-                message:
-                  type: string
+                type: object
+                properties:
+                  message:
+                    type: string
         '400':
           description: Invalid wordId supplied
         '401':
@@ -401,6 +403,15 @@ paths:
           description: "server error"
 
 components:
+  securitySchemes:
+    norsk_client_auth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    norsk_user_auth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
   schemas:
     user:
       type: object
@@ -435,6 +446,12 @@ components:
         token:
           type: string
           example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTYiLCJ1c2VybmFtZSI6ImpvaG5kb2UiLCJyb2xlIjoiYWRtaW4iLCJpYXQiOjE2ODAwMDAwMDB9.fake-signature-placeholder"
+        tokenType:
+          type: string
+          example: Bearer
+        expiresIn:
+          type: integer
+          example: 7200
     firstName:
       type: string
       example: Karl-Klaus
@@ -447,7 +464,7 @@ components:
     password:
       type: string
       example: myVerySecretlySecret
-      description: has to be longer than 12 chars
+      description: has to be longer than 12 chars, small and capital letters, as well as numbers and special chars except ' or &
     wordFamilyWithId:
       allOf:
         - type: object

@@ -6,9 +6,9 @@ namespace norsk\api\infrastructure\config;
 
 use RuntimeException;
 
-class File
+readonly class File
 {
-    private function __construct(private readonly Path $path)
+    private function __construct(private Path $path)
     {
     }
 

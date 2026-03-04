@@ -6,9 +6,9 @@ namespace norsk\api\shared\infrastructure\http\response;
 
 use Psr\Http\Message\ResponseInterface;
 
-class ResponseHeaderApplier
+readonly class ResponseHeaderApplier
 {
-    private function __construct(private readonly ResponseHeaders $headers)
+    private function __construct(private ResponseHeaders $headers)
     {
     }
 

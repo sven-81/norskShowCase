@@ -22,11 +22,11 @@ class IdentityAccessManagementFactoryTest extends TestCase
 
     protected function setUp(): void
     {
-        $configMock = $this->createMock(AppConfig::class);
-        $loggerMock = $this->createMock(Logger::class);
-        $userReaderMock = $this->createMock(UsersReader::class);
+        $configStub = $this->createStub(AppConfig::class);
+        $loggerStub = $this->createStub(Logger::class);
+        $userReaderStub = $this->createStub(UsersReader::class);
         $url = Url::by('http://foo');
-        $this->factory = new IdentityAccessManagementFactory($configMock, $loggerMock, $userReaderMock, $url);
+        $this->factory = new IdentityAccessManagementFactory($configStub, $loggerStub, $userReaderStub, $url);
     }
 
 

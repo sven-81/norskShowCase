@@ -38,7 +38,7 @@ readonly class LoginUser
     private static function ensureFieldsExists(array $payloadArray): void
     {
         foreach ([self::USERNAME, self::PASSWORD] as $field) {
-            if (empty($payloadArray[$field])) {
+            if (!isset($payloadArray[$field]) || $payloadArray[$field] === '') {
                 throw new ParameterMissingException(Parameter::by($field));
             }
         }

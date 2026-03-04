@@ -30,10 +30,10 @@ class ParameterMissingExceptionTest extends TestCase
 
     protected function setUp(): void
     {
-        $parameterMock = $this->createMock(Parameter::class);
-        $parameterMock->method('asString')
+        $parameterStub = $this->createStub(Parameter::class);
+        $parameterStub->method('asString')
             ->willReturn('testParameter');
 
-        $this->exception = new ParameterMissingException($parameterMock);
+        $this->exception = new ParameterMissingException($parameterStub);
     }
 }

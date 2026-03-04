@@ -28,15 +28,12 @@ class AuthenticationTest extends TestCase
 
     private ServerRequestInterface|MockObject $requestMock;
 
-    private MockObject|RequestHandlerInterface $requestHandlerMock;
-
     private Url $url;
 
 
     protected function setUp(): void
     {
         $this->requestMock = $this->createMock(ServerRequestInterface::class);
-        $this->requestHandlerMock = $this->createMock(RequestHandlerInterface::class);
 
         $this->jwtManagementMock = $this->createMock(JwtManagement::class);
         $this->url = Url::by('http://foo');
@@ -52,27 +49,30 @@ class AuthenticationTest extends TestCase
         $payload = Payload::by($class);
         $authenticatedUser = JwtAuthenticatedUser::byPayload($payload);
 
-        $this->requestMock->method('getHeader')
+        $this->requestMock->expects($this->once())
+            ->method('getHeader')
             ->willReturn(['Authorization']);
 
         $this->jwtManagementMock->expects($this->once())
             ->method('validate')
             ->willReturn($payload);
 
-        $expectedRequest = $this->createMock(ServerRequestInterface::class);
+        $expectedRequest = $this->createStub(ServerRequestInterface::class);
         $this->requestMock
+            ->expects($this->once())
             ->method('withAttribute')
             ->with('authenticatedUser', $authenticatedUser)
             ->willReturn($expectedRequest);
 
-        $expectedResponse = $this->createMock(ResponseInterface::class);
-        $this->requestHandlerMock
+        $requestHandlerMock = $this->createMock(RequestHandlerInterface::class);
+        $expectedResponse = $this->createStub(ResponseInterface::class);
+        $requestHandlerMock
             ->expects($this->once())
             ->method('handle')
             ->with($expectedRequest)
             ->willReturn($expectedResponse);
 
-        $result = $this->auth->process($this->requestMock, $this->requestHandlerMock);
+        $result = $this->auth->process($this->requestMock, $requestHandlerMock);
 
         $this->assertSame($expectedResponse, $result);
     }
@@ -80,15 +80,15 @@ class AuthenticationTest extends TestCase
 
     public function testReturnsUnauthorizedResponseIfAuthHeaderIsMissing(): void
     {
-        $this->requestMock->method('getHeader')
+        $this->requestMock->expects($this->once())
+            ->method('getHeader')
             ->willReturn([]);
 
         $this->jwtManagementMock->expects($this->never())
             ->method('validate');
-        $this->requestHandlerMock->expects($this->never())
-            ->method('handle');
 
-        $response = $this->auth->process($this->requestMock, $this->requestHandlerMock);
+        $requestHandlerStub = $this->createStub(RequestHandlerInterface::class);
+        $response = $this->auth->process($this->requestMock, $requestHandlerStub);
         self::assertEquals(
             UnauthorizedResponse::noHeader($this->url)->getBody()->getContents(),
             $response->getBody()->getContents()
@@ -98,15 +98,17 @@ class AuthenticationTest extends TestCase
 
     public function testThrowsExceptionOnFailure(): void
     {
-        $this->requestMock->method('getHeader')
+        $this->requestMock->expects($this->once())
+            ->method('getHeader')
             ->willReturn(['Authorization']);
 
         $exception = new RuntimeException('some error');
         $this->jwtManagementMock
+            ->expects($this->once())
             ->method('validate')
             ->willThrowException($exception);
 
-        $response = $this->auth->process($this->requestMock, $this->requestHandlerMock);
+        $response = $this->auth->process($this->requestMock, $this->createStub(RequestHandlerInterface::class));
         self::assertEquals(
             ErrorResponse::unauthorized($this->url, $exception)->getBody()->getContents(),
             $response->getBody()->getContents()

@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace norsk\api\manager\domain\words;
 
 use LogicException;
-use norsk\api\infrastructure\persistence\AffectedRows;
 use norsk\api\shared\application\Json;
 use norsk\api\shared\domain\German;
 use norsk\api\shared\domain\Id;
@@ -13,12 +12,12 @@ use norsk\api\shared\domain\ManagingVocabulary;
 use norsk\api\shared\domain\Norsk;
 use norsk\api\shared\domain\VocabularyPersistencePort;
 
-class ManagedWord implements ManagingVocabulary
+readonly class ManagedWord implements ManagingVocabulary
 {
     private function __construct(
-        private readonly ?Id $id,
-        private readonly German $german,
-        private readonly Norsk $norsk
+        private ?Id $id,
+        private German $german,
+        private Norsk $norsk
     ) {
     }
 
@@ -67,9 +66,9 @@ class ManagedWord implements ManagingVocabulary
     }
 
 
-    public function updateWith(VocabularyPersistencePort $writer): AffectedRows
+    public function updateWith(VocabularyPersistencePort $writer): void
     {
-        return $writer->saveEditedWord($this);
+        $writer->saveEditedWord($this);
     }
 
 

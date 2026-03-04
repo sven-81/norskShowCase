@@ -31,15 +31,15 @@ use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Throwable;
 
-class WordManager implements ControllerInterface
+readonly class WordManager implements ControllerInterface
 {
     public function __construct(
-        private readonly Logger $logger,
-        private readonly WordsProvider $wordsProvider,
-        private readonly WordCreator $wordCreator,
-        private readonly WordUpdater $wordUpdater,
-        private readonly WordRemover $wordRemover,
-        private readonly Url $url
+        private Logger $logger,
+        private WordsProvider $wordsProvider,
+        private WordCreator $wordCreator,
+        private WordUpdater $wordUpdater,
+        private WordRemover $wordRemover,
+        private Url $url
     ) {
     }
 

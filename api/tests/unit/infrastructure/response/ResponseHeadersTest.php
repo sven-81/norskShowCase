@@ -14,10 +14,12 @@ use PHPUnit\Framework\TestCase;
 class ResponseHeadersTest extends TestCase
 {
     use TestHeader;
+
     public function testCanBeUsedAsArray(): void
     {
         $url = Url::by('http://foo');
-        self::assertSame($this->getTestHeaderAsArray($url),
+        self::assertSame(
+            $this->getTestHeaderAsArray($url),
             ResponseHeaders::create($url)->asArray()
         );
     }

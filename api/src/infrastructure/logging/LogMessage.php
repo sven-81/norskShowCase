@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace norsk\api\infrastructure\logging;
 
-class LogMessage
+readonly class LogMessage
 {
-    private function __construct(private readonly string $message)
+    private function __construct(private string $message)
     {
     }
 

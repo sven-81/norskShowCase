@@ -8,13 +8,11 @@ use norsk\api\manager\domain\words\ManagedWord;
 use norsk\api\shared\infrastructure\http\request\Payload;
 use norsk\api\tests\provider\WordProvider;
 use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 
 #[CoversClass(CreateWord::class)]
 class CreateWordTest extends TestCase
 {
-
     private CreateWord $createWord;
 
     private ManagedWord $word;
@@ -23,11 +21,11 @@ class CreateWordTest extends TestCase
     protected function setUp(): void
     {
         $this->word = WordProvider::managedWordArchipelago();
-        $payloadMock = $this->createMock(Payload::class);
-        $payloadMock->method('asArray')
+        $payloadStub = $this->createStub(Payload::class);
+        $payloadStub->method('asArray')
             ->willReturn($this->word->asJson()->asDecodedJson());
 
-        $this->createWord = CreateWord::createBy($payloadMock);
+        $this->createWord = CreateWord::createBy($payloadStub);
     }
 
 

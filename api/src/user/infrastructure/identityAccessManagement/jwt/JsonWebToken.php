@@ -5,10 +5,11 @@ declare(strict_types=1);
 namespace norsk\api\user\infrastructure\identityAccessManagement\jwt;
 
 use InvalidArgumentException;
+use norsk\api\user\domain\model\AuthToken;
 
-class JsonWebToken
+readonly class JsonWebToken implements AuthToken
 {
-    private function __construct(private readonly string $token)
+    private function __construct(private string $token)
     {
     }
 
@@ -23,7 +24,7 @@ class JsonWebToken
 
     private static function ensureTokenIsJwtValid(string $token): void
     {
-        if (!preg_match("/^([a-zA-Z0-9_=]{4,36})\.([a-zA-Z0-9_=]{4,})\.([a-zA-Z0-9_\-+\/=]{4,86})$/", $token)) {
+        if (!preg_match("/^([a-zA-Z0-9_=]{4,})\.([a-zA-Z0-9_=]{4,})\.([a-zA-Z0-9_\-+\/=]{4,})$/", $token)) {
             throw new InvalidArgumentException('Token has no valid format');
         }
     }

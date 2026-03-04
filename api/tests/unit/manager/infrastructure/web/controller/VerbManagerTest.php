@@ -8,6 +8,7 @@ use GuzzleHttp\Psr7\Response;
 use GuzzleHttp\Psr7\ServerRequest;
 use norsk\api\infrastructure\logging\Logger;
 use norsk\api\infrastructure\logging\LogMessage;
+use norsk\api\manager\domain\ManagedVocabularies;
 use norsk\api\manager\application\verbManaging\useCases\CreateVerb;
 use norsk\api\manager\application\verbManaging\useCases\DeleteVerb;
 use norsk\api\manager\application\verbManaging\useCases\GetAllVerbs;
@@ -19,7 +20,6 @@ use norsk\api\manager\application\verbManaging\VerbUpdater;
 use norsk\api\manager\infrastructure\web\responses\VocabularyListResponse;
 use norsk\api\shared\application\Json;
 use norsk\api\shared\domain\Id;
-use norsk\api\shared\domain\Vocabularies;
 use norsk\api\shared\infrastructure\http\request\Payload;
 use norsk\api\shared\infrastructure\http\response\ResponseCode;
 use norsk\api\shared\infrastructure\http\response\responses\CreatedResponse;
@@ -36,7 +36,6 @@ use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ResponseInterface;
 use RuntimeException;
 
-
 #[CoversClass(VerbManager::class)]
 class VerbManagerTest extends TestCase
 {
@@ -44,17 +43,7 @@ class VerbManagerTest extends TestCase
 
     private Url $url;
 
-    private VerbsProvider|MockObject $verbsProviderMock;
-
-    private VerbCreator|MockObject $verbCreatorMock;
-
-    private VerbUpdater|MockObject $verbUpdaterMock;
-
-    private VerbRemover|MockObject $verbRemoverMock;
-
     private Id $id;
-
-    private AuthenticatedUserInterface|MockObject $authenticatedUserMock;
 
     private UserName $userName;
 
@@ -65,33 +54,44 @@ class VerbManagerTest extends TestCase
         $this->logger = $this->createMock(Logger::class);
         $this->id = Id::by(1);
         $this->userName = UserName::by('someBody');
+    }
 
-        $this->authenticatedUserMock = $this->createMock(AuthenticatedUserInterface::class);
 
-        $this->verbsProviderMock = $this->createMock(VerbsProvider::class);
-        $this->verbCreatorMock = $this->createMock(VerbCreator::class);
-        $this->verbUpdaterMock = $this->createMock(VerbUpdater::class);
-        $this->verbRemoverMock = $this->createMock(VerbRemover::class);
+    private function createVerbManager(
+        VerbsProvider $verbsProvider,
+        VerbCreator $verbCreator,
+        VerbUpdater $verbUpdater,
+        VerbRemover $verbRemover,
+    ): VerbManager {
+        return new VerbManager(
+            $this->logger,
+            $verbsProvider,
+            $verbCreator,
+            $verbUpdater,
+            $verbRemover,
+            $this->url
+        );
     }
 
 
     public function testCanGetAllVerbs(): void
     {
-        $verbManager = new VerbManager(
-            $this->logger,
-            $this->verbsProviderMock,
-            $this->verbCreatorMock,
-            $this->verbUpdaterMock,
-            $this->verbRemoverMock,
-            $this->url
+        $verbsProviderMock = $this->createMock(VerbsProvider::class);
+        $authenticatedUserMock = $this->createMock(AuthenticatedUserInterface::class);
+
+        $verbManager = $this->createVerbManager(
+            $verbsProviderMock,
+            $this->createStub(VerbCreator::class),
+            $this->createStub(VerbUpdater::class),
+            $this->createStub(VerbRemover::class),
         );
 
-        $this->authenticatedUserMock->expects($this->once())
+        $authenticatedUserMock->expects($this->once())
             ->method('getUserName')
             ->willReturn($this->userName);
 
         $command = GetAllVerbs::create();
-        $this->verbsProviderMock->expects($this->once())
+        $verbsProviderMock->expects($this->once())
             ->method('handle')
             ->with($command)
             ->willReturn($this->getVerbs());
@@ -110,15 +110,15 @@ class VerbManagerTest extends TestCase
         $json = Json::fromString($verbsJson);
         $expectedVerbs = VocabularyListResponse::create($this->url, $json);
 
-        $response = $verbManager->getAllVerbs($this->authenticatedUserMock);
+        $response = $verbManager->getAllVerbs($authenticatedUserMock);
         $this->assertions($expectedVerbs, $response);
     }
 
 
-    private function getVerbs(): Vocabularies
+    private function getVerbs(): ManagedVocabularies
     {
         $verb = VerbProvider::managedVerbToGo();
-        $verbs = Vocabularies::create();
+        $verbs = ManagedVocabularies::create();
         $verbs->add($verb);
 
         return $verbs;
@@ -142,8 +142,9 @@ class VerbManagerTest extends TestCase
 
     public function testReturnsErrorResponseOnThrownExceptionIfCannotGetAllVerbs(): void
     {
+        $verbsProviderMock = $this->createMock(VerbsProvider::class);
         $throwable = new RuntimeException('ooops');
-        $this->verbsProviderMock->expects($this->once())
+        $verbsProviderMock->expects($this->once())
             ->method('handle')
             ->willThrowException($throwable);
 
@@ -155,15 +156,13 @@ class VerbManagerTest extends TestCase
 
         $expectedVerbs = ErrorResponse::serverError($this->url, $throwable);
 
-        $verbManager = new VerbManager(
-            $this->logger,
-            $this->verbsProviderMock,
-            $this->verbCreatorMock,
-            $this->verbUpdaterMock,
-            $this->verbRemoverMock,
-            $this->url
+        $verbManager = $this->createVerbManager(
+            $verbsProviderMock,
+            $this->createStub(VerbCreator::class),
+            $this->createStub(VerbUpdater::class),
+            $this->createStub(VerbRemover::class),
         );
-        $response = $verbManager->getAllVerbs($this->authenticatedUserMock);
+        $response = $verbManager->getAllVerbs($this->createStub(AuthenticatedUserInterface::class));
 
         $this->assertions($expectedVerbs, $response);
     }
@@ -171,11 +170,12 @@ class VerbManagerTest extends TestCase
 
     public function testCanCreateVerb(): void
     {
-        $requestMock = $this->createRequest();
+        $verbCreatorMock = $this->createMock(VerbCreator::class);
+        $requestStub = $this->createRequestStub();
 
-        $payload = Payload::of($requestMock);
+        $payload = Payload::of($requestStub);
         $command = CreateVerb::createBy($payload);
-        $this->verbCreatorMock->expects($this->once())
+        $verbCreatorMock->expects($this->once())
             ->method('handle')
             ->with($command);
 
@@ -189,38 +189,37 @@ class VerbManagerTest extends TestCase
 
         $expectedResponse = CreatedResponse::savedVocabulary($this->url);
 
-        $verbManager = new VerbManager(
-            $this->logger,
-            $this->verbsProviderMock,
-            $this->verbCreatorMock,
-            $this->verbUpdaterMock,
-            $this->verbRemoverMock,
-            $this->url
+        $verbManager = $this->createVerbManager(
+            $this->createStub(VerbsProvider::class),
+            $verbCreatorMock,
+            $this->createStub(VerbUpdater::class),
+            $this->createStub(VerbRemover::class),
         );
-        $response = $verbManager->createVerb($this->authenticatedUserMock, $requestMock);
+        $response = $verbManager->createVerb($this->createStub(AuthenticatedUserInterface::class), $requestStub);
 
         $this->assertions($expectedResponse, $response);
     }
 
 
-    private function createRequest(): MockObject|ServerRequest
+    private function createRequestStub(): ServerRequest
     {
         $expectedArray = VerbProvider::managedVerbToGoAsArray();
 
-        $requestMock = $this->createMock(ServerRequest::class);
-        $requestMock->method('getParsedBody')
+        $requestStub = $this->createStub(ServerRequest::class);
+        $requestStub->method('getParsedBody')
             ->willReturn($expectedArray);
 
-        return $requestMock;
+        return $requestStub;
     }
 
 
     public function testReturnsErrorResponseOnThrownExceptionIfCannotCreateVerbBecauseItAlreadyExists(): void
     {
-        $requestMock = $this->createRequest();
+        $verbCreatorMock = $this->createMock(VerbCreator::class);
+        $requestStub = $this->createRequestStub();
 
         $throwable = new RuntimeException('ooops', ResponseCode::conflict->value);
-        $this->verbCreatorMock->expects($this->once())
+        $verbCreatorMock->expects($this->once())
             ->method('handle')
             ->willThrowException($throwable);
 
@@ -230,15 +229,13 @@ class VerbManagerTest extends TestCase
 
         $expectedResponse = ErrorResponse::conflict($this->url, $throwable);
 
-        $verbManager = new VerbManager(
-            $this->logger,
-            $this->verbsProviderMock,
-            $this->verbCreatorMock,
-            $this->verbUpdaterMock,
-            $this->verbRemoverMock,
-            $this->url
+        $verbManager = $this->createVerbManager(
+            $this->createStub(VerbsProvider::class),
+            $verbCreatorMock,
+            $this->createStub(VerbUpdater::class),
+            $this->createStub(VerbRemover::class),
         );
-        $response = $verbManager->createVerb($this->authenticatedUserMock, $requestMock);
+        $response = $verbManager->createVerb($this->createStub(AuthenticatedUserInterface::class), $requestStub);
 
         $this->assertions($expectedResponse, $response);
     }
@@ -246,10 +243,11 @@ class VerbManagerTest extends TestCase
 
     public function testReturnsErrorResponseOnThrownExceptionIfCannotCreateVerbDueToSomeOtherError(): void
     {
-        $requestMock = $this->createRequest();
+        $verbCreatorMock = $this->createMock(VerbCreator::class);
+        $requestStub = $this->createRequestStub();
 
         $throwable = new RuntimeException('ooops', ResponseCode::badRequest->value);
-        $this->verbCreatorMock->expects($this->once())
+        $verbCreatorMock->expects($this->once())
             ->method('handle')
             ->willThrowException($throwable);
 
@@ -261,15 +259,13 @@ class VerbManagerTest extends TestCase
 
         $expectedResponse = ErrorResponse::serverError($this->url, $throwable);
 
-        $verbManager = new VerbManager(
-            $this->logger,
-            $this->verbsProviderMock,
-            $this->verbCreatorMock,
-            $this->verbUpdaterMock,
-            $this->verbRemoverMock,
-            $this->url
+        $verbManager = $this->createVerbManager(
+            $this->createStub(VerbsProvider::class),
+            $verbCreatorMock,
+            $this->createStub(VerbUpdater::class),
+            $this->createStub(VerbRemover::class),
         );
-        $response = $verbManager->createVerb($this->authenticatedUserMock, $requestMock);
+        $response = $verbManager->createVerb($this->createStub(AuthenticatedUserInterface::class), $requestStub);
 
         $this->assertions($expectedResponse, $response);
     }
@@ -277,11 +273,12 @@ class VerbManagerTest extends TestCase
 
     public function testCanUpdate(): void
     {
+        $verbUpdaterMock = $this->createMock(VerbUpdater::class);
         $request = $this->updateRequest();
         $payload = Payload::of($request);
 
         $command = UpdateVerb::createBy($this->id, $payload);
-        $this->verbUpdaterMock->expects($this->once())
+        $verbUpdaterMock->expects($this->once())
             ->method('handle')
             ->with($command);
 
@@ -296,15 +293,13 @@ class VerbManagerTest extends TestCase
 
         $expectedResponse = NoContentResponse::updatedVocabularySuccessfully($this->url);
 
-        $verbManager = new VerbManager(
-            $this->logger,
-            $this->verbsProviderMock,
-            $this->verbCreatorMock,
-            $this->verbUpdaterMock,
-            $this->verbRemoverMock,
-            $this->url
+        $verbManager = $this->createVerbManager(
+            $this->createStub(VerbsProvider::class),
+            $this->createStub(VerbCreator::class),
+            $verbUpdaterMock,
+            $this->createStub(VerbRemover::class),
         );
-        $response = $verbManager->update($this->authenticatedUserMock, $request);
+        $response = $verbManager->update($this->createStub(AuthenticatedUserInterface::class), $request);
 
         $this->assertions($expectedResponse, $response);
     }
@@ -329,13 +324,14 @@ class VerbManagerTest extends TestCase
 
     public function testReturnsErrorResponseIfCannotUpdateVerbBecauseItAlreadyExistsForNewVersion(): void
     {
+        $verbUpdaterMock = $this->createMock(VerbUpdater::class);
         $request = $this->updateRequest();
         $payload = Payload::of($request);
 
         $throwable = new RuntimeException('ooops', ResponseCode::conflict->value);
 
         $command = UpdateVerb::createBy($this->id, $payload);
-        $this->verbUpdaterMock->expects($this->once())
+        $verbUpdaterMock->expects($this->once())
             ->method('handle')
             ->with($command)
             ->willThrowException($throwable);
@@ -348,15 +344,13 @@ class VerbManagerTest extends TestCase
 
         $expectedResponse = ErrorResponse::conflict($this->url, $throwable);
 
-        $verbManager = new VerbManager(
-            $this->logger,
-            $this->verbsProviderMock,
-            $this->verbCreatorMock,
-            $this->verbUpdaterMock,
-            $this->verbRemoverMock,
-            $this->url
+        $verbManager = $this->createVerbManager(
+            $this->createStub(VerbsProvider::class),
+            $this->createStub(VerbCreator::class),
+            $verbUpdaterMock,
+            $this->createStub(VerbRemover::class),
         );
-        $response = $verbManager->update($this->authenticatedUserMock, $request);
+        $response = $verbManager->update($this->createStub(AuthenticatedUserInterface::class), $request);
 
         $this->assertions($expectedResponse, $response);
     }
@@ -364,13 +358,14 @@ class VerbManagerTest extends TestCase
 
     public function testReturnsErrorResponseOnThrownExceptionIfCannotUpdateVerbBecauseItIsNotFound(): void
     {
+        $verbUpdaterMock = $this->createMock(VerbUpdater::class);
         $request = $this->updateRequest();
         $payload = Payload::of($request);
 
         $throwable = new RuntimeException('ooops', ResponseCode::notFound->value);
 
         $command = UpdateVerb::createBy($this->id, $payload);
-        $this->verbUpdaterMock->expects($this->once())
+        $verbUpdaterMock->expects($this->once())
             ->method('handle')
             ->with($command)
             ->willThrowException($throwable);
@@ -383,15 +378,13 @@ class VerbManagerTest extends TestCase
 
         $expectedResponse = ErrorResponse::notFound($this->url, $throwable);
 
-        $verbManager = new VerbManager(
-            $this->logger,
-            $this->verbsProviderMock,
-            $this->verbCreatorMock,
-            $this->verbUpdaterMock,
-            $this->verbRemoverMock,
-            $this->url
+        $verbManager = $this->createVerbManager(
+            $this->createStub(VerbsProvider::class),
+            $this->createStub(VerbCreator::class),
+            $verbUpdaterMock,
+            $this->createStub(VerbRemover::class),
         );
-        $response = $verbManager->update($this->authenticatedUserMock, $request);
+        $response = $verbManager->update($this->createStub(AuthenticatedUserInterface::class), $request);
 
         $this->assertions($expectedResponse, $response);
     }
@@ -399,13 +392,14 @@ class VerbManagerTest extends TestCase
 
     public function testReturnsErrorResponseOnThrownExceptionIfCannotUpdateDueToSomeOtherError(): void
     {
+        $verbUpdaterMock = $this->createMock(VerbUpdater::class);
         $request = $this->updateRequest();
         $payload = Payload::of($request);
 
         $throwable = new RuntimeException('ooops', ResponseCode::serverError->value);
 
         $command = UpdateVerb::createBy($this->id, $payload);
-        $this->verbUpdaterMock->expects($this->once())
+        $verbUpdaterMock->expects($this->once())
             ->method('handle')
             ->with($command)
             ->willThrowException($throwable);
@@ -418,15 +412,13 @@ class VerbManagerTest extends TestCase
 
         $expectedResponse = ErrorResponse::serverError($this->url, $throwable);
 
-        $verbManager = new VerbManager(
-            $this->logger,
-            $this->verbsProviderMock,
-            $this->verbCreatorMock,
-            $this->verbUpdaterMock,
-            $this->verbRemoverMock,
-            $this->url
+        $verbManager = $this->createVerbManager(
+            $this->createStub(VerbsProvider::class),
+            $this->createStub(VerbCreator::class),
+            $verbUpdaterMock,
+            $this->createStub(VerbRemover::class),
         );
-        $response = $verbManager->update($this->authenticatedUserMock, $request);
+        $response = $verbManager->update($this->createStub(AuthenticatedUserInterface::class), $request);
 
         $this->assertions($expectedResponse, $response);
     }
@@ -434,10 +426,11 @@ class VerbManagerTest extends TestCase
 
     public function testCanDelete(): void
     {
+        $verbRemoverMock = $this->createMock(VerbRemover::class);
         $request = $this->deleteRequest();
 
         $command = DeleteVerb::createBy($this->id);
-        $this->verbRemoverMock->expects($this->once())
+        $verbRemoverMock->expects($this->once())
             ->method('handle')
             ->with($command);
 
@@ -450,15 +443,13 @@ class VerbManagerTest extends TestCase
         $json = Json::fromString('{"message":"Removed verb with id: 1"}');
         $expectedResponse = SuccessResponse::deletedRecord($this->url, $json);
 
-        $verbManager = new VerbManager(
-            $this->logger,
-            $this->verbsProviderMock,
-            $this->verbCreatorMock,
-            $this->verbUpdaterMock,
-            $this->verbRemoverMock,
-            $this->url
+        $verbManager = $this->createVerbManager(
+            $this->createStub(VerbsProvider::class),
+            $this->createStub(VerbCreator::class),
+            $this->createStub(VerbUpdater::class),
+            $verbRemoverMock,
         );
-        $response = $verbManager->delete($this->authenticatedUserMock, $request);
+        $response = $verbManager->delete($this->createStub(AuthenticatedUserInterface::class), $request);
 
         $this->assertions($expectedResponse, $response);
     }
@@ -479,12 +470,13 @@ class VerbManagerTest extends TestCase
 
     public function testReturnsErrorResponseOnThrownExceptionIfCannotDeleteVerbBecauseItIsNotFound(): void
     {
+        $verbRemoverMock = $this->createMock(VerbRemover::class);
         $request = $this->deleteRequest();
 
         $throwable = new RuntimeException('ooops', ResponseCode::notFound->value);
 
         $command = DeleteVerb::createBy($this->id);
-        $this->verbRemoverMock->expects($this->once())
+        $verbRemoverMock->expects($this->once())
             ->method('handle')
             ->with($command)
             ->willThrowException($throwable);
@@ -497,15 +489,13 @@ class VerbManagerTest extends TestCase
 
         $expectedResponse = ErrorResponse::notFound($this->url, $throwable);
 
-        $verbManager = new VerbManager(
-            $this->logger,
-            $this->verbsProviderMock,
-            $this->verbCreatorMock,
-            $this->verbUpdaterMock,
-            $this->verbRemoverMock,
-            $this->url
+        $verbManager = $this->createVerbManager(
+            $this->createStub(VerbsProvider::class),
+            $this->createStub(VerbCreator::class),
+            $this->createStub(VerbUpdater::class),
+            $verbRemoverMock,
         );
-        $response = $verbManager->delete($this->authenticatedUserMock, $request);
+        $response = $verbManager->delete($this->createStub(AuthenticatedUserInterface::class), $request);
 
         $this->assertions($expectedResponse, $response);
     }
@@ -513,12 +503,13 @@ class VerbManagerTest extends TestCase
 
     public function testReturnsErrorResponseOnThrownExceptionIfCannotDeleteDueToSomeOtherError(): void
     {
+        $verbRemoverMock = $this->createMock(VerbRemover::class);
         $request = $this->deleteRequest();
 
         $throwable = new RuntimeException('ooops', ResponseCode::serverError->value);
 
         $command = DeleteVerb::createBy($this->id);
-        $this->verbRemoverMock->expects($this->once())
+        $verbRemoverMock->expects($this->once())
             ->method('handle')
             ->with($command)
             ->willThrowException($throwable);
@@ -531,15 +522,13 @@ class VerbManagerTest extends TestCase
 
         $expectedResponse = ErrorResponse::serverError($this->url, $throwable);
 
-        $verbManager = new VerbManager(
-            $this->logger,
-            $this->verbsProviderMock,
-            $this->verbCreatorMock,
-            $this->verbUpdaterMock,
-            $this->verbRemoverMock,
-            $this->url
+        $verbManager = $this->createVerbManager(
+            $this->createStub(VerbsProvider::class),
+            $this->createStub(VerbCreator::class),
+            $this->createStub(VerbUpdater::class),
+            $verbRemoverMock,
         );
-        $response = $verbManager->delete($this->authenticatedUserMock, $request);
+        $response = $verbManager->delete($this->createStub(AuthenticatedUserInterface::class), $request);
 
         $this->assertions($expectedResponse, $response);
     }

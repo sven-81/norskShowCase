@@ -1,15 +1,31 @@
-import { createApp } from 'vue';
-import { createPinia } from 'pinia';
+import { createApp } from 'vue'
+import { createPinia, setActivePinia } from 'pinia'
 
-import App from './App.vue';
-import { router } from './router';
+import App from '@/ui/App.vue'
+import { router } from '@/infrastructure/router'
+import { registerAuthProvider } from '@/infrastructure/http/HttpClient'
+import { useAuthStore } from '@/infrastructure/store/auth.store'
 
-const app = createApp(App);
-app.config.errorHandler = (err) => {
-    console.log(err)
-}
+const app = createApp(App)
 
-app.use(createPinia());
-app.use(router);
+const pinia = createPinia()
+setActivePinia(pinia)
 
-app.mount('#app');
+app.use(pinia)
+app.use(router)
+
+const authStore = useAuthStore()
+registerAuthProvider({
+    getToken: () => {
+        if (authStore.user !== null && authStore.user.token) {
+            return authStore.user.token
+        }
+        return null
+    },
+    logout: () => {
+        authStore.logout()
+    }
+})
+
+app.mount('#app')
+

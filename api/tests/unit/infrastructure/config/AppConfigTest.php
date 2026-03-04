@@ -24,7 +24,6 @@ class AppConfigTest extends TestCase
     private const string FAKE_CONFIG_PATH = __DIR__ . '/../resources/fakeConfig.ini';
     private const string DEBUG_CONFIG_PATH = __DIR__ . '/../resources/debugConfig.ini';
     private const int E_ERROR_E_PARSE = 5;
-    private const int E_ALL = 32767;
 
     private AppConfig $config;
 
@@ -259,7 +258,7 @@ class AppConfigTest extends TestCase
     {
         self::assertEquals(
             JwtConfig::fromCredentials(
-                AuthenticationKey::by('abc123'),
+                AuthenticationKey::by('ABCDEFGHIJKLMnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz01'),
                 AuthenticationAlgorithm::by('HS512'),
                 JwtSubject::by('norsk app'),
                 JwtAudience::by('Norsk Client')
@@ -373,7 +372,7 @@ class AppConfigTest extends TestCase
         $productionCodeLevel = error_reporting();
         $this->setLevelToAllForTests();
 
-        $this->assertSame(self::E_ALL, $productionCodeLevel, 'E_ALL aktiv');
+        $this->assertSame(E_ALL, $productionCodeLevel, 'E_ALL aktiv');
     }
 
 

@@ -13,7 +13,9 @@ class DirectoryCleaner
     {
         $files = glob($sourcePath->getPath()->asString() . '/*');
         foreach ($files as $file) {
-            if (is_file($file)) {
+            if (is_dir($file)) {
+                $this->deleteDirectoryRecursiveOf(File::fromPath(Path::fromString($file)));
+            } else {
                 unlink($file);
             }
         }

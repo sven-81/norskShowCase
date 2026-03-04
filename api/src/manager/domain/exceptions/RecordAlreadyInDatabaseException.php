@@ -6,8 +6,8 @@ namespace norsk\api\manager\domain\exceptions;
 
 use DomainException;
 use norsk\api\manager\domain\Identifier;
+use norsk\api\shared\domain\DomainExceptionCode;
 use norsk\api\shared\domain\VocabularyType;
-use norsk\api\shared\infrastructure\http\response\ResponseCode;
 
 class RecordAlreadyInDatabaseException extends DomainException
 {
@@ -15,7 +15,7 @@ class RecordAlreadyInDatabaseException extends DomainException
     {
         parent::__construct(
             ucfirst($vocabularyType->value) . ' already exists for ' . $identifier->asMessageString(),
-            ResponseCode::conflict->value
+            DomainExceptionCode::conflict->value
         );
     }
 }

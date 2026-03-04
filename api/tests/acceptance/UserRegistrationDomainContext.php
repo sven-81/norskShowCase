@@ -82,7 +82,7 @@ class UserRegistrationDomainContext implements Context
 
         $this->url = Url::by('http://foo');
 
-        /** @var JwtService|MockObject $jwtManagementMock */
+        /** @var MockObject&JwtService $jwtManagementMock */
         $jwtManagementMock = MockHelper::createJwtManagementMock();
 
         $context = new UserManagementFactory($logger, $database, $jwtManagementMock, $appConfig);

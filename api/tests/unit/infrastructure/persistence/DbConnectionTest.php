@@ -7,17 +7,6 @@ namespace norsk\api\infrastructure\persistence;
 use LogicException;
 use mysqli_result;
 use norsk\api\infrastructure\config\DbConfig;
-use norsk\api\infrastructure\persistence\AffectedRows;
-use norsk\api\infrastructure\persistence\DatabaseName;
-use norsk\api\infrastructure\persistence\DbConnection;
-use norsk\api\infrastructure\persistence\GenericSqlStatement;
-use norsk\api\infrastructure\persistence\Host;
-use norsk\api\infrastructure\persistence\MysqliWrapper;
-use norsk\api\infrastructure\persistence\Parameters;
-use norsk\api\infrastructure\persistence\Password;
-use norsk\api\infrastructure\persistence\Port;
-use norsk\api\infrastructure\persistence\SqlResult;
-use norsk\api\infrastructure\persistence\User;
 use norsk\api\shared\infrastructure\http\response\ResponseCode;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -31,33 +20,23 @@ class DbConnectionTest extends TestCase
 
     private MysqliWrapper|MockObject $mysqliMock;
 
-    private MockObject|DbConfig $dbConfigMock;
-
-    private Parameters|MockObject $paramsMock;
-
     private string $query;
-
-    private GenericSqlStatement|MockObject $sqlMock;
 
 
     protected function setUp(): void
     {
         $this->mysqliMock = $this->createMock(MysqliWrapper::class);
-        $this->dbConfigMock = $this->createMock(DbConfig::class);
-
-        $this->paramsMock = $this->createMock(Parameters::class);
         $this->query = 'SELECT * FROM test';
-
-        $this->sqlMock = $this->createMock(GenericSqlStatement::class);
     }
 
 
     public function testCanConnectToDatabase(): void
     {
-        $this->dbConfigMock->expects($this->once())
+        $dbConfigMock = $this->createMock(DbConfig::class);
+        $dbConfigMock->expects($this->once())
             ->method('host')
             ->willReturn(Host::fromString('host'));
-        $this->dbConfigMock();
+        $this->configureDbConfigMock($dbConfigMock);
 
         $this->mysqliMock->expects($this->once())
             ->method('connect')
@@ -74,23 +53,23 @@ class DbConnectionTest extends TestCase
             ->method('set_charset')
             ->with('utf8');
 
-        $dbConnection = new DbConnection($this->mysqliMock, $this->dbConfigMock);
+        $dbConnection = new DbConnection($this->mysqliMock, $dbConfigMock);
         $dbConnection->createConnection();
     }
 
 
-    private function dbConfigMock(): void
+    private function configureDbConfigMock(MockObject $dbConfigMock): void
     {
-        $this->dbConfigMock->expects($this->once())
+        $dbConfigMock->expects($this->once())
             ->method('user')
             ->willReturn(User::fromString('user'));
-        $this->dbConfigMock->expects($this->once())
+        $dbConfigMock->expects($this->once())
             ->method('password')
             ->willReturn(Password::fromString('password'));
-        $this->dbConfigMock->expects($this->once())
+        $dbConfigMock->expects($this->once())
             ->method('database')
             ->willReturn(DatabaseName::fromString('database'));
-        $this->dbConfigMock->expects($this->once())
+        $dbConfigMock->expects($this->once())
             ->method('port')
             ->willReturn(Port::fromInt(3306));
     }
@@ -105,7 +84,8 @@ class DbConnectionTest extends TestCase
             )
         );
 
-        $this->dbConfigMock->expects($this->exactly(2))
+        $dbConfigMock = $this->createMock(DbConfig::class);
+        $dbConfigMock->expects($this->exactly(2))
             ->method('host')
             ->willReturn(Host::fromString('host'));
 
@@ -117,14 +97,15 @@ class DbConnectionTest extends TestCase
         $this->mysqliMock->expects($this->never())
             ->method('set_charset');
 
-        $dbConnection = new DbConnection($this->mysqliMock, $this->dbConfigMock);
+        $dbConnection = new DbConnection($this->mysqliMock, $dbConfigMock);
         $dbConnection->createConnection();
     }
 
 
     public function testCanGetResult(): void
     {
-        $this->sqlMock->expects($this->once())
+        $sqlMock = $this->createMock(GenericSqlStatement::class);
+        $sqlMock->expects($this->once())
             ->method('asString')
             ->willReturn($this->query);
 
@@ -141,14 +122,15 @@ class DbConnectionTest extends TestCase
             ->with($this->query, [])
             ->willReturn($resultMock);
 
-        $this->paramsMock->expects($this->once())
+        $paramsMock = $this->createMock(Parameters::class);
+        $paramsMock->expects($this->once())
             ->method('asArray')
             ->willReturn([]);
 
-        $dbConnection = new DbConnection($this->mysqliMock, $this->dbConfigMock);
+        $dbConnection = new DbConnection($this->mysqliMock, $this->createStub(DbConfig::class));
         self::assertEquals(
             SqlResult::resultFromArray([['foo', 'bar']]),
-            $dbConnection->getResult($this->sqlMock, $this->paramsMock)
+            $dbConnection->getResult($sqlMock, $paramsMock)
         );
     }
 
@@ -159,7 +141,8 @@ class DbConnectionTest extends TestCase
             new LogicException('getResults is supposed to be used for SELECT, SHOW, DESCRIBE or EXPLAIN')
         );
 
-        $this->sqlMock->expects($this->once())
+        $sqlMock = $this->createMock(GenericSqlStatement::class);
+        $sqlMock->expects($this->once())
             ->method('asString')
             ->willReturn($this->query);
 
@@ -171,14 +154,15 @@ class DbConnectionTest extends TestCase
             ->with($this->query, [])
             ->willReturn(true);
 
-        $this->paramsMock->expects($this->once())
+        $paramsMock = $this->createMock(Parameters::class);
+        $paramsMock->expects($this->once())
             ->method('asArray')
             ->willReturn([]);
 
-        $dbConnection = new DbConnection($this->mysqliMock, $this->dbConfigMock);
+        $dbConnection = new DbConnection($this->mysqliMock, $this->createStub(DbConfig::class));
         self::assertEquals(
             SqlResult::resultFromArray([['foo', 'bar']]),
-            $dbConnection->getResult($this->sqlMock, $this->paramsMock)
+            $dbConnection->getResult($sqlMock, $paramsMock)
         );
     }
 
@@ -189,7 +173,9 @@ class DbConnectionTest extends TestCase
             new RuntimeException('Could not execute query: ' . $this->query)
         );
 
-        $this->sqlMock->method('asString')
+        $sqlMock = $this->createMock(GenericSqlStatement::class);
+        $sqlMock->expects($this->once())
+            ->method('asString')
             ->willReturn($this->query);
 
         $this->mysqliMock->expects($this->once())
@@ -200,14 +186,20 @@ class DbConnectionTest extends TestCase
             ->with($this->query, [])
             ->willReturn(false);
 
-        $dbConnection = new DbConnection($this->mysqliMock, $this->dbConfigMock);
-        $dbConnection->getResult($this->sqlMock, $this->paramsMock);
+        $paramsMock = $this->createMock(Parameters::class);
+        $paramsMock->expects($this->once())
+            ->method('asArray')
+            ->willReturn([]);
+
+        $dbConnection = new DbConnection($this->mysqliMock, $this->createStub(DbConfig::class));
+        $dbConnection->getResult($sqlMock, $paramsMock);
     }
 
 
     public function testCanExecute(): void
     {
-        $this->sqlMock->expects($this->once())
+        $sqlMock = $this->createMock(GenericSqlStatement::class);
+        $sqlMock->expects($this->once())
             ->method('asString')
             ->willReturn($this->query);
 
@@ -222,14 +214,15 @@ class DbConnectionTest extends TestCase
             ->method('affectedRows')
             ->willReturn(1);
 
-        $this->paramsMock->expects($this->once())
+        $paramsMock = $this->createMock(Parameters::class);
+        $paramsMock->expects($this->once())
             ->method('asArray')
             ->willReturn([]);
 
-        $dbConnection = new DbConnection($this->mysqliMock, $this->dbConfigMock);
+        $dbConnection = new DbConnection($this->mysqliMock, $this->createStub(DbConfig::class));
         self::assertEquals(
             AffectedRows::fromInt(1),
-            $dbConnection->execute($this->sqlMock, $this->paramsMock)
+            $dbConnection->execute($sqlMock, $paramsMock)
         );
     }
 }

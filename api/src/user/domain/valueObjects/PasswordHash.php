@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace norsk\api\user\domain\valueObjects;
 
 use norsk\api\shared\application\SanitizedClientInput;
-use norsk\api\shared\infrastructure\http\response\ResponseCode;
+use norsk\api\shared\domain\DomainExceptionCode;
 use norsk\api\user\domain\exceptions\CredentialsAreInvalidException;
 use norsk\api\user\domain\exceptions\PasswordIsInvalidException;
 use SensitiveParameter;
@@ -43,7 +43,7 @@ readonly class PasswordHash
         if (strlen($password) < self::MIN_PASSWORD_LENGTH) {
             throw new PasswordIsInvalidException(
                 'Password is too short',
-                ResponseCode::unprocessable->value
+                DomainExceptionCode::invalidInput->value
             );
         }
     }
@@ -84,7 +84,7 @@ readonly class PasswordHash
         if ($trimmed === '') {
             throw new PasswordIsInvalidException(
                 'Password name cannot be empty',
-                ResponseCode::unprocessable->value
+                DomainExceptionCode::invalidInput->value
             );
         }
     }

@@ -25,7 +25,6 @@ use PHPUnit\Framework\TestCase;
 #[CoversClass(SqlUniquenessPolicy::class)]
 class SqlUniquenessPolicyTest extends TestCase
 {
-
     private DbConnection|MockObject $dbConnectionMock;
 
     private Id $id;

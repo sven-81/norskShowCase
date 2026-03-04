@@ -13,7 +13,6 @@ use PHPUnit\Framework\TestCase;
 #[CoversClass(CreateVerb::class)]
 class CreateVerbTest extends TestCase
 {
-
     private CreateVerb $createVerb;
 
     private ManagedVerb $verb;
@@ -23,11 +22,11 @@ class CreateVerbTest extends TestCase
     {
         $this->verb = VerbProvider::managedVerbToGo();
 
-        $payloadMock = $this->createMock(Payload::class);
-        $payloadMock->method('asArray')
+        $payloadStub = $this->createStub(Payload::class);
+        $payloadStub->method('asArray')
             ->willReturn($this->verb->asJson()->asDecodedJson());
 
-        $this->createVerb = CreateVerb::createBy($payloadMock);
+        $this->createVerb = CreateVerb::createBy($payloadStub);
     }
 
 

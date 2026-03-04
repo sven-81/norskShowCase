@@ -5,7 +5,7 @@ jwt for client to import testdata on test-env
   "aud": "Norsk Client",
   "scope": "is:manager",
   "nickname": "test",
-  "exp": 3655218009
+  "exp": 3655218009 // Montag, 29. Oktober 2085 19:20:09 GMT+01:00
 }
 
 QUJDREVGR0hJSktMTW5vcHFyc3R1dnd4eXowMTIzNDU2Nzg5

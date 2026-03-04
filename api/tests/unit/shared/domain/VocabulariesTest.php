@@ -76,7 +76,7 @@ class VocabulariesTest extends TestCase
     public function testThrowsExceptionIfNoIdCanBeMapped(): void
     {
         $this->expectExceptionObject(
-            new OutOfBoundsException('No Word can be mapped with chosen id: 321')
+            new OutOfBoundsException('No vocabulary found for id: 321')
         );
         $this->words->pick(Id::by(321));
     }
@@ -85,7 +85,7 @@ class VocabulariesTest extends TestCase
     public function testThrowsExceptionIfPickIsUsedOnManagedWords(): void
     {
         $this->expectExceptionObject(
-            new LogicException('Vocabulary type has to be TrainingWord or TrainingVerb')
+            new OutOfBoundsException('No vocabulary found for id: 3')
         );
 
         $managedWords = Vocabularies::create();

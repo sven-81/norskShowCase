@@ -10,7 +10,6 @@ use norsk\api\shared\infrastructure\http\request\Payload;
 
 readonly class CreateWord
 {
-
     private function __construct(
         private German $german,
         private Norsk $norsk

@@ -4,22 +4,21 @@ declare(strict_types=1);
 
 namespace norsk\api\user;
 
-use InvalidArgumentException;
-use norsk\api\infrastructure\persistence\SqlResult;
 use norsk\api\shared\infrastructure\http\response\ResponseCode;
 use norsk\api\user\domain\exceptions\CredentialsAreInvalidException;
 use norsk\api\user\domain\exceptions\NoActiveUserException;
 use norsk\api\user\domain\model\Role;
+use norsk\api\user\domain\model\UserData;
 use norsk\api\user\domain\model\ValidatedUser;
 use norsk\api\user\domain\valueObjects\FirstName;
 use norsk\api\user\domain\valueObjects\InputPassword;
 use norsk\api\user\domain\valueObjects\LastName;
+use norsk\api\user\domain\valueObjects\PasswordHash;
+use norsk\api\user\domain\valueObjects\PasswordVector;
 use norsk\api\user\domain\valueObjects\Pepper;
 use norsk\api\user\domain\valueObjects\Salt;
 use norsk\api\user\domain\valueObjects\UserName;
 use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\DataProvider;
-use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 
 #[CoversClass(ValidatedUser::class)]
@@ -33,26 +32,40 @@ class ValidatedUserTest extends TestCase
 
     private LastName $lastName;
 
-    private array $array;
-
-    private MockObject|SqlResult $sqlResultMock;
-
     private InputPassword $givenPassword;
 
     private Pepper $pepper;
 
     private Salt $salt;
 
+    private PasswordHash $hash;
 
-    public static function getMissingKeys(): array
+    private UserData $userData;
+
+
+    protected function setUp(): void
     {
-        return [
-            'username' => ['username'],
-            'firstname' => ['firstname'],
-            'lastname' => ['lastname'],
-            'password_hash' => ['password_hash'],
-            'role' => ['role'],
-        ];
+        $this->userName      = UserName::by('someUserName');
+        $this->firstName     = FirstName::by('someFirstName');
+        $this->lastName      = LastName::by('someLastName');
+        $this->pepper        = Pepper::by('iwwBYerIjfYhu04X0mm5GvN4woua6yqI');
+        $this->salt          = Salt::by('b681dc56924c1b5dc92bf97f79708fd89e84cbe128548687bb8070eb002e82b4');
+        $this->givenPassword = InputPassword::by('someLoooongPassword');
+
+        $vector     = PasswordVector::by($this->salt, $this->pepper);
+        $this->hash = PasswordHash::hashBy($this->givenPassword, $vector);
+
+        $this->userData = UserData::of(
+            userName: $this->userName,
+            firstName: $this->firstName,
+            lastName: $this->lastName,
+            passwordHash: $this->hash,
+            salt: $this->salt,
+            role: Role::USER,
+            isActive: true,
+        );
+
+        $this->user = ValidatedUser::fromUserData($this->userData, $this->givenPassword, $this->pepper);
     }
 
 
@@ -82,29 +95,11 @@ class ValidatedUserTest extends TestCase
 
     public function testThrowsExceptionOnInvalidPassword(): void
     {
-        $this->expectExceptionObject(new CredentialsAreInvalidException());
-        $this->user = ValidatedUser::createBySqlResultAndPasswordHash(
-            $this->sqlResultMock,
-            InputPassword::by('somethingVeryWrong'),
-            $this->pepper
-        );
-    }
+        $this->expectException(CredentialsAreInvalidException::class);
 
-
-    #[DataProvider('getMissingKeys')]
-    public function testThrowsExceptionIfParameterIsMissing(string $missingKey): void
-    {
-        $this->expectExceptionObject(new InvalidArgumentException('Missing field: ' . $missingKey));
-
-        unset($this->array[0][$missingKey]);
-
-        $invalidResultMock = $this->createMock(SqlResult::class);
-        $invalidResultMock->method('asArray')
-            ->willReturn($this->array);
-
-        $this->user = ValidatedUser::createBySqlResultAndPasswordHash(
-            $invalidResultMock,
-            $this->givenPassword,
+        ValidatedUser::fromUserData(
+            $this->userData,
+            InputPassword::by('somethingVeryWrong!!'),
             $this->pepper
         );
     }
@@ -116,58 +111,16 @@ class ValidatedUserTest extends TestCase
             new NoActiveUserException('Forbidden: user is not active', ResponseCode::forbidden->value)
         );
 
-        $array = [
-            [
-                'username' => 'someUserName',
-                'firstname' => 'someFirstName',
-                'lastname' => 'someLastName',
-                'password_hash' => '$2y$10$2zb1NPZIFt8wjf/rddjmjup2bllCl5icWF5zdHmebMwZgEtambmvC',
-                'salt' => $this->salt->asString(),
-                'role' => 'user',
-                'active' => 0,
-            ],
-        ];
-
-        $invalidResultMock = $this->createMock(SqlResult::class);
-        $invalidResultMock->method('asArray')
-            ->willReturn($array);
-
-        $this->user = ValidatedUser::createBySqlResultAndPasswordHash(
-            $invalidResultMock,
-            $this->givenPassword,
-            $this->pepper
+        $inactiveUserData = UserData::of(
+            userName: $this->userName,
+            firstName: $this->firstName,
+            lastName: $this->lastName,
+            passwordHash: $this->hash,
+            salt: $this->salt,
+            role: Role::USER,
+            isActive: false,
         );
-    }
 
-
-    protected function setUp(): void
-    {
-        $this->userName = UserName::by('someUserName');
-        $this->firstName = FirstName::by('someFirstName');
-        $this->lastName = LastName::by('someLastName');
-        $this->salt = Salt::by('b681dc56924c1b5dc92bf97f79708fd89e84cbe128548687bb8070eb002e82b4');
-        $this->givenPassword = InputPassword::by('someLoooongPassword');
-        $this->pepper = Pepper::by('iwwBYerIjfYhu04X0mm5GvN4woua6yqI');
-
-        $this->array = [
-            [
-                'username' => 'someUserName',
-                'firstname' => 'someFirstName',
-                'lastname' => 'someLastName',
-                'password_hash' => '$2y$10$2zb1NPZIFt8wjf/rddjmjup2bllCl5icWF5zdHmebMwZgEtambmvC',
-                'salt' => $this->salt->asString(),
-                'role' => 'user',
-                'active' => 1,
-            ],
-        ];
-        $this->sqlResultMock = $this->createMock(SqlResult::class);
-        $this->sqlResultMock->method('asArray')
-            ->willReturn($this->array);
-
-        $this->user = ValidatedUser::createBySqlResultAndPasswordHash(
-            $this->sqlResultMock,
-            $this->givenPassword,
-            $this->pepper
-        );
+        ValidatedUser::fromUserData($inactiveUserData, $this->givenPassword, $this->pepper);
     }
 }

@@ -8,7 +8,7 @@ use ArrayIterator;
 use Closure;
 use IteratorAggregate;
 
-class SqlResult implements IteratorAggregate
+readonly class SqlResult implements IteratorAggregate
 {
     /**
      * @param array<array|string|int|bool|null> $result
@@ -93,7 +93,7 @@ class SqlResult implements IteratorAggregate
 
     private function childIsNotEmpty(array $anyKeysChild): bool
     {
-        return !empty($anyKeysChild);
+        return count($anyKeysChild) !== 0;
     }
 
 

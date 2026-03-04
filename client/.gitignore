@@ -14,18 +14,20 @@ dist-ssr
 coverage
 *.local
 
-/client/cypress/videos/
-/client/cypress/screenshots/
+# Build artifacts
+*.js
+*.d.ts
+!env.d.ts
+!vite.config.ts
+!vitest.config.ts
 
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
 .idea
-.DS_Store
 *.suo
 *.ntvs*
 *.njsproj
 *.sln
 *.sw?
 
-*.tsbuildinfo

@@ -7,9 +7,9 @@ namespace norsk\api\infrastructure\config;
 use ArrayIterator;
 use IteratorAggregate;
 
-class IniItems implements IteratorAggregate
+readonly class IniItems implements IteratorAggregate
 {
-    private function __construct(private readonly array $items)
+    private function __construct(private array $items)
     {
     }
 

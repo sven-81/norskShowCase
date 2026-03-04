@@ -16,7 +16,6 @@ use PHPUnit\Framework\TestCase;
 #[CoversClass(VerbToTrainProvider::class)]
 class VerbToTrainProviderTest extends TestCase
 {
-
     public function testCanHandleCommand(): void
     {
         $userName = UserName::by('someUser');

@@ -8,7 +8,6 @@ use GuzzleHttp\Psr7\ServerRequest;
 use InvalidArgumentException;
 use norsk\api\shared\infrastructure\http\response\ResponseCode;
 use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use stdClass;
 
@@ -18,7 +17,7 @@ class PayloadTest extends TestCase
     /** @var string[] */
     private array $expectedArray;
 
-    private MockObject|ServerRequest $requestMock;
+    private ServerRequest $requestStub;
 
 
     protected function setUp(): void
@@ -28,15 +27,15 @@ class PayloadTest extends TestCase
             'someOtherKey' => 'someOtherValue',
         ];
 
-        $this->requestMock = $this->createMock(ServerRequest::class);
-        $this->requestMock->method('getParsedBody')
+        $this->requestStub = $this->createStub(ServerRequest::class);
+        $this->requestStub->method('getParsedBody')
             ->willReturn($this->expectedArray);
     }
 
 
     public function testCanBeUsedOfRequestAsArray(): void
     {
-        self::assertEquals($this->expectedArray, Payload::of($this->requestMock)->asArray());
+        self::assertEquals($this->expectedArray, Payload::of($this->requestStub)->asArray());
     }
 
 
@@ -55,7 +54,7 @@ class PayloadTest extends TestCase
         $expectedJson = '{"someKey":"someValue","someOtherKey":"someOtherValue"}';
         self::assertJsonStringEqualsJsonString(
             $expectedJson,
-            Payload::of($this->requestMock)->asJson()->asString()
+            Payload::of($this->requestStub)->asJson()->asString()
         );
     }
 
@@ -66,10 +65,10 @@ class PayloadTest extends TestCase
             new InvalidArgumentException('No request body', ResponseCode::badRequest->value)
         );
 
-        $requestMock = $this->createMock(ServerRequest::class);
-        $requestMock->method('getParsedBody')
+        $requestStub = $this->createStub(ServerRequest::class);
+        $requestStub->method('getParsedBody')
             ->willReturn(null);
 
-        Payload::of($requestMock);
+        Payload::of($requestStub);
     }
 }

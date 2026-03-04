@@ -10,5 +10,4 @@ use norsk\api\user\domain\valueObjects\UserName;
 interface TrainingVerbReadingRepository
 {
     public function getAllVerbsFor(UserName $userName): Vocabularies;
-
 }

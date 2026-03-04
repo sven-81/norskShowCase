@@ -7,7 +7,6 @@ namespace norsk\api\user\application;
 use norsk\api\user\domain\model\Role;
 use norsk\api\user\domain\valueObjects\UserName;
 
-
 interface AuthenticatedUserInterface
 {
     public function getUserName(): UserName;

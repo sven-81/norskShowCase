@@ -10,12 +10,12 @@ use norsk\api\user\domain\model\RegisteredUser;
 use norsk\api\user\domain\port\UserWritingRepository;
 use norsk\api\user\infrastructure\persistence\queries\AddUserSql;
 
-class UsersWriter implements UserWritingRepository
+readonly class UsersWriter implements UserWritingRepository
 {
-    private readonly AddUserSql $addingUserSql;
+    private AddUserSql $addingUserSql;
 
 
-    public function __construct(private readonly DbConnection $dbConnector)
+    public function __construct(private DbConnection $dbConnector)
     {
         $this->addingUserSql = AddUserSql::create();
     }

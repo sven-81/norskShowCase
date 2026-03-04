@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace norsk\api\infrastructure\config;
 
-class Path
+readonly class Path
 {
-    private function __construct(private readonly string $path)
+    private function __construct(private string $path)
     {
     }
 

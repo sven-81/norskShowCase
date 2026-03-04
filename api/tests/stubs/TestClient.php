@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace norsk\api\tests\stubs;
 
-use Ebln\Guzzle\OpenApi\Middleware as OpenApiMiddleware;
 use GuzzleHttp\Client;
 use GuzzleHttp\HandlerStack;
+use League\OpenAPIValidation\PSR7\OperationAddress;
 use League\OpenAPIValidation\PSR7\ValidatorBuilder;
 use norsk\api\shared\application\Json;
 use Psr\Http\Message\ResponseInterface;
@@ -20,8 +20,9 @@ class TestClient
         string $bearerPath,
         string $method,
         string $uri,
-        Json $requestBody = null,
-    ): ResponseInterface {
+        ?Json  $requestBody = null,
+    ): ResponseInterface
+    {
         $client = new Client([
             'handler' => self::createHandlerStack(),
             'base_uri' => self::DOCKER_SERVICE_NAME_BASE_URI,
@@ -37,8 +38,9 @@ class TestClient
         string $bearerPath,
         string $method,
         string $uri,
-        Json $requestBody = null,
-    ): ResponseInterface {
+        ?Json  $requestBody = null,
+    ): ResponseInterface
+    {
         $client = new Client(
             [
                 'base_uri' => self::DOCKER_SERVICE_NAME_BASE_URI,
@@ -67,17 +69,47 @@ class TestClient
         return ['headers' => $headers];
     }
 
-
     private static function createHandlerStack(): HandlerStack
     {
-        $builder = new ValidatorBuilder();
-        $builder->fromYamlFile(__DIR__ . '/../../../tools/norskApi.yaml');
-
-        $middleware = new OpenApiMiddleware($builder->getRequestValidator(), $builder->getResponseValidator());
+        $middleware = self::openApiMiddleware();
 
         $stack = HandlerStack::create();
         $stack->push($middleware, 'openapi_validation');
 
         return $stack;
+    }
+
+    private static function openApiMiddleware(): callable
+    {
+        $builder = new ValidatorBuilder();
+        $builder->fromYamlFile(__DIR__ . '/../../../tools/norskApi.yaml');
+
+        $requestValidator = $builder->getRequestValidator();
+        $responseValidator = $builder->getResponseValidator();
+
+        return static function (callable $handler) use ($requestValidator, $responseValidator) {
+
+            return static function ($request, array $options) use ($handler, $requestValidator, $responseValidator) {
+                self::validateRequest($requestValidator, $request);
+                $promise = $handler($request, $options);
+
+                return $promise->then(fn($response) => self::validateResponse($responseValidator, $request, $response));
+            };
+        };
+    }
+
+    private static function validateRequest($validator, $request): void
+    {
+        $validator->validate($request);
+    }
+
+    private static function validateResponse($validator, $request, $response)
+    {
+        $path = $request->getUri()->getPath();
+        $method = strtolower($request->getMethod());
+        $operationAddress = new OperationAddress($path, $method);
+        $validator->validate($operationAddress, $response);
+
+        return $response;
     }
 }

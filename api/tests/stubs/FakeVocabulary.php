@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace norsk\api\tests\stubs;
 
-use norsk\api\infrastructure\persistence\AffectedRows;
 use norsk\api\shared\application\Json;
 use norsk\api\shared\domain\Id;
 use norsk\api\shared\domain\ManagingVocabulary;
@@ -53,8 +52,7 @@ class FakeVocabulary implements TrainingVocabulary, ManagingVocabulary
     }
 
 
-    public function updateWith(VocabularyPersistencePort $writer): AffectedRows
+    public function updateWith(VocabularyPersistencePort $writer): void
     {
-        return AffectedRows::fromInt(rows: 1);
     }
 }

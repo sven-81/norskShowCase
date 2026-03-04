@@ -22,10 +22,10 @@ class UserManagementFactoryTest extends TestCase
     protected function setUp(): void
     {
         $this->factory = new UserManagementFactory(
-            $this->createMock(Logger::class),
-            $this->createMock(DbConnection::class),
-            $this->createMock(JwtManagement::class),
-            $this->createMock(AppConfig::class)
+            $this->createStub(Logger::class),
+            $this->createStub(DbConnection::class),
+            $this->createStub(JwtManagement::class),
+            $this->createStub(AppConfig::class)
         );
     }
 

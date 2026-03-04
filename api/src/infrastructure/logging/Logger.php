@@ -4,29 +4,34 @@ declare(strict_types=1);
 
 namespace norsk\api\infrastructure\logging;
 
-use Katzgrau\KLogger\Logger as KLogger;
+use Monolog\Formatter\LineFormatter;
+use Monolog\Handler\StreamHandler;
+use Monolog\Level;
+use Monolog\Logger as MonologLogger;
 use norsk\api\infrastructure\config\Path;
-use Psr\Log\LogLevel;
 use Throwable;
 
-class Logger
+readonly class Logger
 {
-    private readonly KLogger $logger;
+    private MonologLogger $logger;
 
 
     private function __construct(Path $logPath)
     {
-        $logFormat = "[{date}]\t[{level}]\t{message}";
-        $logFileName = 'log_' . date('Y-m-d') . '.log';
-        $this->logger = new KLogger(
-            logDirectory: $logPath->asString(),
-            logLevelThreshold: LogLevel::INFO,
-            options: [
-                'dateFormat' => 'Y-m-d H:i:s.u',
-                'logFormat' => $logFormat,
-                'filename' => $logFileName,
-            ]
+        $logFileName = $logPath->asString() . '/log_' . date('Y-m-d') . '.log';
+
+        $formatter = new LineFormatter(
+            format: "[%datetime%]\t[%level_name%]\t%message%\n",
+            dateFormat: 'Y-m-d H:i:s.u',
+            allowInlineLineBreaks: true,
+            ignoreEmptyContextAndExtra: true,
         );
+
+        $handler = new StreamHandler(stream: $logFileName, level: Level::Info);
+        $handler->setFormatter($formatter);
+
+        $this->logger = new MonologLogger(name: 'norsk');
+        $this->logger->pushHandler($handler);
     }
 
 

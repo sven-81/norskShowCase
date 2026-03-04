@@ -15,6 +15,7 @@ use norsk\api\infrastructure\logging\Logger;
 use norsk\api\infrastructure\logging\LogMessage;
 use norsk\api\shared\application\SanitizedClientInput;
 use norsk\api\shared\infrastructure\http\request\Payload;
+use norsk\api\user\domain\model\AuthToken;
 use norsk\api\user\domain\model\ValidatedUser;
 use norsk\api\user\domain\service\JwtService;
 use norsk\api\user\infrastructure\identityAccessManagement\EnhancedClock;
@@ -38,7 +39,7 @@ class JwtManagement implements JwtService
     }
 
 
-    public function create(ValidatedUser $validatedUser): JsonWebToken
+    public function create(ValidatedUser $validatedUser): AuthToken
     {
         $role = $validatedUser->getRole();
 
@@ -50,7 +51,7 @@ class JwtManagement implements JwtService
             'iat' => $this->clock->getTimestamp(),
             'exp' => $futureClock->getTimestamp(),
             'scope' => "is:" . $role->value,
-            'nickname' => $validatedUser->getUsername()->asString(),
+            'nickname' => $validatedUser->getUserName()->asString(),
         ];
 
         $jwt = JWT::encode(

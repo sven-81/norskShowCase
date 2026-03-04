@@ -6,7 +6,6 @@ namespace norsk\api\infrastructure\routing;
 
 use norsk\api\user\infrastructure\identityAccessManagement\IdentityAccessManagementFactory;
 use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use ReflectionClass;
 use Slim\App;
@@ -16,31 +15,33 @@ use Slim\Routing\RouteCollectorProxy;
 #[CoversClass(Router::class)]
 class RouterTest extends TestCase
 {
-    private MockObject|IdentityAccessManagementFactory $identityAccessManagementMock;
-
     private Router $router;
-
-    private MockObject|App $appMock;
 
 
     protected function setUp(): void
     {
-        $this->identityAccessManagementMock = $this->createMock(IdentityAccessManagementFactory::class);
-        $contextMock = $this->createMock(Context::class);
-        $controllerResolverMock = $this->createMock(ControllerResolver::class);
+        $contextStub = $this->createStub(Context::class);
+        $controllerResolverStub = $this->createStub(ControllerResolver::class);
+        $identityAccessManagementStub = $this->createStub(IdentityAccessManagementFactory::class);
 
-        $this->appMock = $this->createMock(App::class);
-        $this->router = new Router($this->identityAccessManagementMock, $contextMock, $controllerResolverMock);
+        $this->router = new Router($identityAccessManagementStub, $contextStub, $controllerResolverStub);
     }
 
 
     public function testRunCallsIdentityAccessManagementForAuthenticationForGeneralApiRoute(): void
     {
-        $this->identityAccessManagementMock->expects($this->once())
+        $identityAccessManagementMock = $this->createMock(IdentityAccessManagementFactory::class);
+        $identityAccessManagementMock->expects($this->once())
             ->method('createAuthentication');
 
+        $router = new Router(
+            $identityAccessManagementMock,
+            $this->createStub(Context::class),
+            $this->createStub(ControllerResolver::class)
+        );
+
         $_GET = '/api';
-        $this->router->run($this->appMock);
+        $router->run($this->createStub(App::class));
     }
 
 
@@ -52,7 +53,8 @@ class RouterTest extends TestCase
         $groupMock->expects($matcher)
             ->method('post');
 
-        $this->appMock->expects($this->once())
+        $appMock = $this->createMock(App::class);
+        $appMock->expects($this->once())
             ->method('group')
             ->with(
                 '/api/v1',
@@ -63,13 +65,13 @@ class RouterTest extends TestCase
                 })
             );
 
-        $this->router->run($this->appMock);
+        $this->router->run($appMock);
     }
 
 
     public function testRouteUsersAddsCorrectRoutes(): void
     {
-        $routeMock = $this->createMock(Route::class);
+        $routeStub = $this->createStub(Route::class);
         $groupMock = $this->createMock(RouteCollectorProxy::class);
 
         $matcher = $this->exactly(2);
@@ -86,8 +88,8 @@ class RouterTest extends TestCase
                 }
             )
             ->willReturn(
-                $routeMock,
-                $routeMock
+                $routeStub,
+                $routeStub
             );
 
         $reflection = new ReflectionClass(Router::class);

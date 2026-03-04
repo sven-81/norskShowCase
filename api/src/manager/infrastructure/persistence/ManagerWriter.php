@@ -18,23 +18,23 @@ use norsk\api\manager\infrastructure\persistence\queries\words\AddingWordsSql;
 use norsk\api\manager\infrastructure\persistence\queries\words\EditWordsSql;
 use norsk\api\shared\domain\German;
 use norsk\api\shared\domain\Id;
-use norsk\api\shared\domain\Norsk;
 use norsk\api\shared\domain\ManagingVocabulary;
+use norsk\api\shared\domain\Norsk;
 use norsk\api\shared\domain\VocabularyPersistencePort;
 use norsk\api\shared\domain\VocabularyType;
 
-class ManagerWriter implements WritingRepository, VocabularyPersistencePort
+readonly class ManagerWriter implements WritingRepository, VocabularyPersistencePort
 {
-    private readonly EditWordsSql $editWords;
+    private EditWordsSql $editWords;
 
-    private readonly AddingWordsSql $addingWordsSql;
+    private AddingWordsSql $addingWordsSql;
 
-    private readonly AddingVerbsSql $addingVerbsSql;
+    private AddingVerbsSql $addingVerbsSql;
 
-    private readonly EditVerbsSql $editVerbs;
+    private EditVerbsSql $editVerbs;
 
 
-    public function __construct(private readonly DbConnection $dbConnector)
+    public function __construct(private DbConnection $dbConnector)
     {
         $this->addingWordsSql = AddingWordsSql::create();
         $this->addingVerbsSql = AddingVerbsSql::create();
@@ -94,39 +94,41 @@ class ManagerWriter implements WritingRepository, VocabularyPersistencePort
 
     public function update(ManagingVocabulary $vocabulary): void
     {
-        $changedRows = $vocabulary->updateWith($this);
-
-        $this->ensureIdToChangeWasInDatabase($changedRows, $vocabulary->getId());
+        $vocabulary->updateWith($this);
     }
 
 
-    public function saveEditedWord(ManagedWord $word): AffectedRows
+    public function saveEditedWord(ManagedWord $word): void
     {
         $params = $this->addGermanAndNorskInfinitive($word->getGerman(), $word->getNorsk());
         $params->addInt($word->getId()->asInt());
 
-        return $this->dbConnector->execute(
+        $affectedRows = $this->dbConnector->execute(
             $this->editWords,
             $params
         );
+
+        $this->ensureIdWasFoundInDatabase($affectedRows, $word->getId());
     }
 
 
-    public function saveEditedVerb(ManagedVerb $verb): AffectedRows
+    public function saveEditedVerb(ManagedVerb $verb): void
     {
         $params = $this->addVerbToParams($verb);
         $params->addInt($verb->getId()->asInt());
 
-        return $this->dbConnector->execute(
+        $affectedRows = $this->dbConnector->execute(
             $this->editVerbs,
             $params
         );
+
+        $this->ensureIdWasFoundInDatabase($affectedRows, $verb->getId());
     }
 
 
-    private function ensureIdToChangeWasInDatabase(AffectedRows $changedRows, Id $id): void
+    private function ensureIdWasFoundInDatabase(AffectedRows $affectedRows, Id $id): void
     {
-        if ($changedRows->notAtLeastOne()) {
+        if ($affectedRows->notAtLeastOne()) {
             throw new NoRecordInDatabaseException($id);
         }
     }
@@ -137,11 +139,11 @@ class ManagerWriter implements WritingRepository, VocabularyPersistencePort
         $params = Parameters::init();
         $params->addInt($id->asInt());
 
-        $changedRows = $this->dbConnector->execute(
+        $affectedRows = $this->dbConnector->execute(
             RemoveVocabularySql::create($vocabularyType),
             $params
         );
 
-        $this->ensureIdToChangeWasInDatabase($changedRows, $id);
+        $this->ensureIdWasFoundInDatabase($affectedRows, $id);
     }
 }

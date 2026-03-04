@@ -16,12 +16,12 @@ use norsk\api\user\application\UserLogin;
 use Psr\Http\Message\ResponseInterface;
 use Throwable;
 
-class Login
+readonly class Login
 {
     public function __construct(
-        private readonly Logger $logger,
-        private readonly UserLogin $userLogin,
-        private readonly Url $url,
+        private Logger $logger,
+        private UserLogin $userLogin,
+        private Url $url,
     ) {
     }
 

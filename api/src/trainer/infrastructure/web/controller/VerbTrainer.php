@@ -22,13 +22,13 @@ use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Throwable;
 
-class VerbTrainer implements ControllerInterface
+readonly class VerbTrainer implements ControllerInterface
 {
     public function __construct(
-        private readonly Logger $logger,
-        private readonly VerbToTrainProvider $getVerbToTrainHandler,
-        private readonly VerbProgressUpdater $saveTrainedVerbHandler,
-        private readonly Url $url,
+        private Logger $logger,
+        private VerbToTrainProvider $getVerbToTrainHandler,
+        private VerbProgressUpdater $saveTrainedVerbHandler,
+        private Url $url,
     ) {
     }
 

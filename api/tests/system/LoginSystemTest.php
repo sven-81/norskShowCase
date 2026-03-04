@@ -108,7 +108,6 @@ class LoginSystemTest extends TestCase
             '{ "username": "' . $userName . '", "password": "myVerySecretlySecret" }'
         );
 
-
         $response = TestClient::createWithApiDocValidation($this->bearerPath, $this->method, $this->uri, $requestBody);
         $this->rewindBodyToGetUneditedResponseBecauseMiddlewareIsEditingItToEmpty($response);
         $responseJson = Json::fromString($response->getBody()->getContents());

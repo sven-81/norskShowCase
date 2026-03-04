@@ -9,12 +9,12 @@ use norsk\api\user\infrastructure\identityAccessManagement\IdentityAccessManagem
 use Slim\App;
 use Slim\Routing\RouteCollectorProxy;
 
-class Router
+readonly class Router
 {
     public function __construct(
-        private readonly IdentityAccessManagementFactory $identityAccessManagement,
-        private readonly Context $context,
-        private readonly ControllerResolver $controllerResolver,
+        private IdentityAccessManagementFactory $identityAccessManagement,
+        private Context $context,
+        private ControllerResolver $controllerResolver,
     ) {
     }
 
@@ -23,8 +23,7 @@ class Router
     {
         $app->group('/api/v1', function (RouteCollectorProxy $group): void {
             $this->defineApiRoutes($group);
-        }
-        )->addMiddleware($this->identityAccessManagement->createAuthentication());
+        })->addMiddleware($this->identityAccessManagement->createAuthentication());
     }
 
 

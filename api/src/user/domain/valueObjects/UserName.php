@@ -6,7 +6,7 @@ namespace norsk\api\user\domain\valueObjects;
 
 use InvalidArgumentException;
 use norsk\api\shared\application\SanitizedClientInput;
-use norsk\api\shared\infrastructure\http\response\ResponseCode;
+use norsk\api\shared\domain\DomainExceptionCode;
 
 readonly class UserName
 {
@@ -38,7 +38,7 @@ readonly class UserName
                     self::MIN_LENGTH,
                     self::MAX_LENGTH
                 ),
-                ResponseCode::unprocessable->value
+                DomainExceptionCode::invalidInput->value
             );
         }
     }
@@ -50,7 +50,7 @@ readonly class UserName
         if ($sanitized !== $trimmed) {
             throw new InvalidArgumentException(
                 'User name contains invalid characters: \' or &.',
-                ResponseCode::unprocessable->value
+                DomainExceptionCode::invalidInput->value
             );
         }
 

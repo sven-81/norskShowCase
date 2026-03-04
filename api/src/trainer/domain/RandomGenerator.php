@@ -4,12 +4,9 @@ declare(strict_types=1);
 
 namespace norsk\api\trainer\domain;
 
-use LogicException;
 use norsk\api\shared\domain\Id;
 use norsk\api\shared\domain\TrainingVocabulary;
 use norsk\api\shared\domain\Vocabularies;
-use norsk\api\trainer\domain\verbs\TrainingVerb;
-use norsk\api\trainer\domain\words\TrainingWord;
 use OutOfBoundsException;
 
 class RandomGenerator
@@ -22,7 +19,7 @@ class RandomGenerator
     }
 
 
-    public function pickFrom(Vocabularies $allVocabulariesForUser): TrainingWord|TrainingVerb
+    public function pickFrom(Vocabularies $allVocabulariesForUser): TrainingVocabulary
     {
         $possibilities = $this->calculatePossibilities($allVocabulariesForUser);
         $pickedVocabularyId = $this->pickARandomIdBasedOnPossibilityWeight($possibilities);
@@ -35,11 +32,10 @@ class RandomGenerator
     {
         $possibilities = [];
 
-        /** @var TrainingWord|TrainingVerb $vocabulary */
         foreach ($allVocabulariesForUser as $vocabulary) {
-            $this->ensureIsNotManaging($vocabulary);
             $successCounter = $vocabulary->getSuccessCounter();
             $vocabularyId = $vocabulary->getId()->asInt();
+
             if ($successCounter->isInitial()) {
                 $possibilities = $this->unratedVocabulariesHaveHighestPossibilityWeight($possibilities, $vocabularyId);
             } else {
@@ -48,14 +44,6 @@ class RandomGenerator
         }
 
         return $this->normalizePossibilitiesInPerCent($possibilities);
-    }
-
-
-    private function ensureIsNotManaging(TrainingVocabulary $vocabulary): void
-    {
-        if (!$vocabulary instanceof TrainingWord && !$vocabulary instanceof TrainingVerb) {
-            throw new LogicException('Vocabulary type has to be TrainingWord or TrainingVerb');
-        }
     }
 
 

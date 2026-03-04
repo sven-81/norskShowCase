@@ -6,7 +6,6 @@ namespace norsk\api\shared\domain;
 
 use InvalidArgumentException;
 use norsk\api\shared\application\SanitizedClientInput;
-use norsk\api\shared\infrastructure\http\response\ResponseCode;
 
 class German
 {
@@ -33,7 +32,7 @@ class German
         if ($strlen < self::SHORTEST_WORD) {
             throw new InvalidArgumentException(
                 'German has at least two chars.',
-                ResponseCode::unprocessable->value
+                DomainExceptionCode::invalidInput->value
             );
         }
     }

@@ -13,7 +13,6 @@ use PHPUnit\Framework\TestCase;
 #[CoversClass(Url::class)]
 class UrlTest extends TestCase
 {
-
     public static function getValidUrl(): array
     {
         return [

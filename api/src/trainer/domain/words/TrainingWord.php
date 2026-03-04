@@ -11,13 +11,13 @@ use norsk\api\shared\domain\Norsk;
 use norsk\api\shared\domain\TrainingVocabulary;
 use norsk\api\trainer\domain\SuccessCounter;
 
-class TrainingWord implements TrainingVocabulary
+readonly class TrainingWord implements TrainingVocabulary
 {
     private function __construct(
-        private readonly Id $id,
-        private readonly German $german,
-        private readonly Norsk $norsk,
-        private readonly SuccessCounter $successCounter,
+        private Id $id,
+        private German $german,
+        private Norsk $norsk,
+        private SuccessCounter $successCounter,
     ) {
     }
 

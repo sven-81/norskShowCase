@@ -19,12 +19,12 @@ use norsk\api\trainer\domain\words\TrainingWordReadingRepository;
 use norsk\api\trainer\infrastructure\persistence\queries\words\GetAllWordsForUserSql;
 use norsk\api\user\domain\valueObjects\UserName;
 
-class WordTrainingReader implements TrainingWordReadingRepository
+readonly class WordTrainingReader implements TrainingWordReadingRepository
 {
-    private readonly GetAllWordsForUserSql $allWordsForUser;
+    private GetAllWordsForUserSql $allWordsForUser;
 
 
-    public function __construct(private readonly DbConnection $dbConnector)
+    public function __construct(private DbConnection $dbConnector)
     {
         $this->allWordsForUser = GetAllWordsForUserSql::create();
     }

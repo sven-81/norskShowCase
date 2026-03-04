@@ -6,9 +6,9 @@ namespace norsk\api\infrastructure\persistence;
 
 use RuntimeException;
 
-class AffectedRows
+readonly class AffectedRows
 {
-    private function __construct(private readonly int $row)
+    private function __construct(private int $row)
     {
     }
 

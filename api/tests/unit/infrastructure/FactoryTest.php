@@ -14,9 +14,9 @@ class FactoryTest extends TestCase
 {
     public function testCanCreateNorskApi(): void
     {
-        $appConfigMock = $this->createMock(AppConfig::class);
-        $dbConfigMock = $this->createMock(DbConfig::class);
-        $factory = Factory::fromConfigs($appConfigMock, $dbConfigMock);
+        $appConfigStub = $this->createStub(AppConfig::class);
+        $dbConfigStub = $this->createStub(DbConfig::class);
+        $factory = Factory::fromConfigs($appConfigStub, $dbConfigStub);
 
         self::assertInstanceOf(NorskApi::class, $factory->createNorskApi());
     }

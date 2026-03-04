@@ -16,16 +16,15 @@ use Psr\Http\Server\RequestHandlerInterface;
 #[CoversClass(CorsMiddleware::class)]
 class CorsMiddlewareTest extends TestCase
 {
-
     public function testReturnsCorsOptionsResponseForOptionsRequest(): void
     {
-        $request = $this->createMock(ServerRequestInterface::class);
+        $request = $this->createStub(ServerRequestInterface::class);
         $request->method('getMethod')
             ->willReturn('OPTIONS');
 
         $url = Url::by('http://foo.bar');
         $middleware = new CorsMiddleware($url);
-        $response = $middleware->process($request, $this->createMock(RequestHandlerInterface::class));
+        $response = $middleware->process($request, $this->createStub(RequestHandlerInterface::class));
 
         self::assertEquals(ResponseCode::success->value, $response->getStatusCode());
         self::assertTrue($response->hasHeader('Access-Control-Allow-Origin'));
@@ -37,13 +36,13 @@ class CorsMiddlewareTest extends TestCase
         $url = Url::by('http://foo.bar');
         $middleware = new CorsMiddleware($url);
 
-        $request = $this->createMock(ServerRequestInterface::class);
+        $request = $this->createStub(ServerRequestInterface::class);
         $request->method('getMethod')
             ->willReturn('GET');
 
         $originalResponse = new Response();
 
-        $handler = $this->createMock(RequestHandlerInterface::class);
+        $handler = $this->createStub(RequestHandlerInterface::class);
         $handler->method('handle')
             ->willReturn($originalResponse);
 

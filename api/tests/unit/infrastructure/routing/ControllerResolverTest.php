@@ -14,24 +14,13 @@ use norsk\api\user\infrastructure\web\controller\Login;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
 
 #[CoversClass(ControllerResolver::class)]
 class ControllerResolverTest extends TestCase
 {
-    private ManagerFactory|MockObject $managerFactoryMock;
-
-    private TrainerFactory|MockObject $trainerFactoryMock;
-
-
-    protected function setUp(): void
-    {
-        $this->managerFactoryMock = $this->createMock(ManagerFactory::class);
-        $this->trainerFactoryMock = $this->createMock(TrainerFactory::class);
-    }
-
-
     public static function getControl(): array
     {
         return [
@@ -49,44 +38,53 @@ class ControllerResolverTest extends TestCase
         string $expectedFactoryMethod,
         string $factoryType
     ): void {
-        /** @var ControllerInterface|MockObject $controllerMock */
-        $controllerMock = $this->createMock($controllerClass);
+        $managerFactoryMock = $factoryType === 'manager'
+            ? $this->createMock(ManagerFactory::class)
+            : $this->createStub(ManagerFactory::class);
 
-        $this->getFactoryMock(
+        $trainerFactoryMock = $factoryType === 'trainer'
+            ? $this->createMock(TrainerFactory::class)
+            : $this->createStub(TrainerFactory::class);
+
+        /** @var Stub&ControllerInterface $controllerStub */
+        $controllerStub = $this->createStub($controllerClass);
+
+        $this->configureFactoryMock(
             $factoryType,
-            $this->managerFactoryMock,
+            $managerFactoryMock,
             $expectedFactoryMethod,
-            $controllerMock,
-            $this->trainerFactoryMock
+            $controllerStub,
+            $trainerFactoryMock
         );
-        $resolver = new ControllerResolver($this->trainerFactoryMock, $this->managerFactoryMock);
+
+        $resolver = new ControllerResolver($trainerFactoryMock, $managerFactoryMock);
 
         $name = $this->createMock(ControllerName::class);
         $name->expects($this->once())
             ->method('asString')
             ->willReturn($controllerClass);
 
-        $this->assertEquals($controllerMock, $resolver->resolve($name));
+        $this->assertEquals($controllerStub, $resolver->resolve($name));
     }
 
 
-    private function getFactoryMock(
+    private function configureFactoryMock(
         string $factoryType,
         ManagerFactory|MockObject $managerFactoryMock,
         string $expectedFactoryMethod,
-        ControllerInterface|MockObject $controllerMock,
+        ControllerInterface $controllerStub,
         TrainerFactory|MockObject $trainerFactoryMock
     ): void {
         if ($factoryType === 'manager') {
             $managerFactoryMock
                 ->expects($this->once())
                 ->method($expectedFactoryMethod)
-                ->willReturn($controllerMock);
+                ->willReturn($controllerStub);
         } else {
             $trainerFactoryMock
                 ->expects($this->once())
                 ->method($expectedFactoryMethod)
-                ->willReturn($controllerMock);
+                ->willReturn($controllerStub);
         }
     }
 
@@ -95,11 +93,14 @@ class ControllerResolverTest extends TestCase
     {
         $this->expectExceptionObject(new RuntimeException('Unknown controller: ' . Login::class));
 
-        $name = $this->createMock(ControllerName::class);
-        $name->method('asString')
+        $nameStub = $this->createStub(ControllerName::class);
+        $nameStub->method('asString')
             ->willReturn(Login::class);
 
-        $resolver = new ControllerResolver($this->trainerFactoryMock, $this->managerFactoryMock);
-        $resolver->resolve($name);
+        $resolver = new ControllerResolver(
+            $this->createStub(TrainerFactory::class),
+            $this->createStub(ManagerFactory::class)
+        );
+        $resolver->resolve($nameStub);
     }
 }

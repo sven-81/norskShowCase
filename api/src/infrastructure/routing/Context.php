@@ -12,13 +12,13 @@ use norsk\api\trainer\infrastructure\TrainerFactory;
 use norsk\api\user\domain\service\JwtService;
 use norsk\api\user\infrastructure\UserManagementFactory;
 
-class Context
+readonly class Context
 {
     public function __construct(
-        private readonly Logger $logger,
-        private readonly DbConnection $dbConnection,
-        private readonly JwtService $jwtManagement,
-        private readonly AppConfig $appConfig
+        private Logger $logger,
+        private DbConnection $dbConnection,
+        private JwtService $jwtManagement,
+        private AppConfig $appConfig
     ) {
     }
 

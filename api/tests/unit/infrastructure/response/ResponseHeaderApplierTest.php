@@ -14,7 +14,6 @@ use PHPUnit\Framework\TestCase;
 #[CoversClass(ResponseHeaderApplier::class)]
 class ResponseHeaderApplierTest extends TestCase
 {
-
     public function testCanApplyHeader(): void
     {
         $response = new Response();

@@ -1,4 +1,8 @@
 # Ignore model files that are auto-generated
+
+# MySQL data directories – contain binary files owned by the MySQL process
+/database/staging/
+/database/tests/
 */.scannerwork
 /.idea/
 /api/vendor/
@@ -7,3 +11,4 @@
 /tools/.phpunit.cache/
 /client/node_modules/
 /vite.log
+/.deptrac.cache

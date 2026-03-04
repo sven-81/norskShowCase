@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace norsk\api\user\domain\exceptions;
 
 use InvalidArgumentException;
+use norsk\api\shared\domain\DomainExceptionCode;
 use norsk\api\shared\infrastructure\http\request\Parameter;
-use norsk\api\shared\infrastructure\http\response\ResponseCode;
 
 class ParameterMissingException extends InvalidArgumentException
 {
@@ -14,7 +14,7 @@ class ParameterMissingException extends InvalidArgumentException
     {
         parent::__construct(
             'Missing required parameter: ' . $parameter->asString(),
-            ResponseCode::badRequest->value
+            DomainExceptionCode::badRequest->value
         );
     }
 }

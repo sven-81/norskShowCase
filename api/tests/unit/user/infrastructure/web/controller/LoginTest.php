@@ -37,8 +37,6 @@ class LoginTest extends TestCase
 
     private UserLogin|MockObject $userLoginMock;
 
-    private LoggedInUser|MockObject $loggedInUserMock;
-
     private string $body;
 
 
@@ -47,10 +45,15 @@ class LoginTest extends TestCase
         $this->url = Url::by('http://url');
         $this->loggerMock = $this->createMock(Logger::class);
         $this->userLoginMock = $this->createMock(UserLogin::class);
-        $this->loggedInUserMock = $this->createMock(LoggedInUser::class);
 
         $this->body = '{"username": "someUser","password": "shhhhhhhhhhhhhhhhhhhhhhhhhh"}';
         $this->token = JsonWebToken::fromString('xzJhb.eyJzdWIicCI6MTY1NTIxODAwOX0.ceU31GO4x6QscCNHS4_6GDVq4A');
+    }
+
+
+    private function createLoggedInUserMock(): LoggedInUser|MockObject
+    {
+        return $this->createMock(LoggedInUser::class);
     }
 
 
@@ -84,17 +87,18 @@ class LoginTest extends TestCase
 
         $command = LoginUser::by(Payload::of($requestMock));
 
-        $this->loggedInUserMock->expects($this->once())
+        $loggedInUserMock = $this->createLoggedInUserMock();
+        $loggedInUserMock->expects($this->once())
             ->method('getUserName')
             ->willReturn(UserName::by('someUser'));
-        $this->loggedInUserMock->expects($this->once())
+        $loggedInUserMock->expects($this->once())
             ->method('asBodyJson')
             ->willReturn($content);
 
         $this->userLoginMock->expects($this->once())
             ->method('handle')
             ->with($command)
-            ->willReturn($this->loggedInUserMock);
+            ->willReturn($loggedInUserMock);
 
         $login = new Login(
             $this->loggerMock,
@@ -138,10 +142,6 @@ class LoginTest extends TestCase
             ->method('error')
             ->with($throwable);
 
-        $this->loggedInUserMock->expects($this->never())
-            ->method('getUserName');
-        $this->loggedInUserMock->expects($this->never())
-            ->method('asBodyJson');
 
         $login = new Login(
             $this->loggerMock,

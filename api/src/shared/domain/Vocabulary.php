@@ -12,5 +12,4 @@ interface Vocabulary
 
 
     public function asJson(): Json;
-
 }

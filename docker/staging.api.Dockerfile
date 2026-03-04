@@ -1,5 +1,8 @@
-FROM php:8.3-apache
+FROM php:8.5-apache
 RUN docker-php-ext-install mysqli
+
+# Match host user UID/GID so that generated files (logs etc.) are owned by the host user
+RUN usermod -u 1000 www-data && groupmod -g 1000 www-data
 
 ENV TZ=Europe/Berlin
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone

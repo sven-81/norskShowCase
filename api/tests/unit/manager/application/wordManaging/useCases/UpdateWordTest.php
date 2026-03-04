@@ -9,16 +9,12 @@ use norsk\api\shared\domain\Id;
 use norsk\api\shared\infrastructure\http\request\Payload;
 use norsk\api\tests\provider\WordProvider;
 use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 
 #[CoversClass(UpdateWord::class)]
 class UpdateWordTest extends TestCase
 {
-
     private Id $id;
-
-    private Payload|MockObject $payloadMock;
 
     private UpdateWord $command;
 
@@ -28,12 +24,12 @@ class UpdateWordTest extends TestCase
     protected function setUp(): void
     {
         $this->word = WordProvider::managedWordArchipelago();
-        $this->payloadMock = $this->createMock(Payload::class);
-        $this->payloadMock->method('asArray')
+        $payloadStub = $this->createStub(Payload::class);
+        $payloadStub->method('asArray')
             ->willReturn($this->word->asJson()->asDecodedJson());
 
         $this->id = Id::by(123);
-        $this->command = UpdateWord::createBy($this->id, $this->payloadMock);
+        $this->command = UpdateWord::createBy($this->id, $payloadStub);
     }
 
 
