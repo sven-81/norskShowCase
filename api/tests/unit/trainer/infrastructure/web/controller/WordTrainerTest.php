@@ -42,17 +42,11 @@ class WordTrainerTest extends TestCase
 
     private UserName $userName;
 
-    private TrainingWord|MockObject $trainingWordMock;
-
-    private WordToTrainProvider|MockObject $getWordToTrainHandler;
-
-    private WordProgressUpdater|MockObject $saveTrainedWordHandler;
+    private TrainingWord $trainingWordStub;
 
     private GetWordToTrain $getWordToTrainCommand;
 
     private SaveTrainedWord $saveTrainedWordCommand;
-
-    private AuthenticatedUserInterface|MockObject $authenticatedUserMock;
 
 
     protected function setUp(): void
@@ -64,31 +58,48 @@ class WordTrainerTest extends TestCase
         $this->userName = UserName::by('someUsername');
         $this->body = Json::fromString(WordProvider::managedWordArchipelagoAsJsonString());
 
-        $this->authenticatedUserMock = $this->createMock(AuthenticatedUserInterface::class);
-        $this->authenticatedUserMock->expects($this->once())
+        $this->getWordToTrainCommand = GetWordToTrain::for($this->userName);
+        $this->saveTrainedWordCommand = SaveTrainedWord::for($this->userName, $this->id);
+
+        $this->trainingWordStub = $this->createStub(TrainingWord::class);
+        $this->trainingWordStub->method('asJson')
+            ->willReturn($this->body);
+    }
+
+
+    private function createAuthenticatedUserMock(): AuthenticatedUserInterface&MockObject
+    {
+        $mock = $this->createMock(AuthenticatedUserInterface::class);
+        $mock->expects($this->once())
             ->method('getUserName')
             ->willReturn($this->userName);
 
-        $this->getWordToTrainHandler = $this->createMock(WordToTrainProvider::class);
-        $this->getWordToTrainCommand = GetWordToTrain::for($this->userName);
+        return $mock;
+    }
 
-        $this->saveTrainedWordHandler = $this->createMock(WordProgressUpdater::class);
-        $this->saveTrainedWordCommand = SaveTrainedWord::for($this->userName, $this->id);
 
-        $this->trainingWordMock = $this->createMock(TrainingWord::class);
-        $this->trainingWordMock->method('asJson')
-            ->willReturn($this->body);
+    private function createTrainer(
+        WordToTrainProvider $wordToTrainProvider,
+        WordProgressUpdater $wordProgressUpdater,
+    ): WordTrainer {
+        return new WordTrainer(
+            $this->loggerMock,
+            $wordToTrainProvider,
+            $wordProgressUpdater,
+            $this->url
+        );
     }
 
 
     public function testCanGetWordToTrain(): void
     {
+        $getWordToTrainMock = $this->createMock(WordToTrainProvider::class);
         $expectedResponse = VocabularyToTrainResponse::create($this->url, $this->body);
 
-        $this->getWordToTrainHandler->expects($this->once())
+        $getWordToTrainMock->expects($this->once())
             ->method('handle')
             ->with($this->getWordToTrainCommand)
-            ->willReturn($this->trainingWordMock);
+            ->willReturn($this->trainingWordStub);
 
         $this->loggerMock->expects($this->once())
             ->method('info')
@@ -100,14 +111,8 @@ class WordTrainerTest extends TestCase
                 )
             );
 
-        $trainer = new WordTrainer(
-            $this->loggerMock,
-            $this->getWordToTrainHandler,
-            $this->saveTrainedWordHandler,
-            $this->url
-        );
-
-        $response = $trainer->getWordToTrain($this->authenticatedUserMock);
+        $trainer = $this->createTrainer($getWordToTrainMock, $this->createStub(WordProgressUpdater::class));
+        $response = $trainer->getWordToTrain($this->createAuthenticatedUserMock());
         $this->assertions($expectedResponse, $response);
     }
 
@@ -123,10 +128,11 @@ class WordTrainerTest extends TestCase
 
     public function testThrowsExceptionOnErrorWhileTryingToGetWordToTrain(): void
     {
+        $getWordToTrainMock = $this->createMock(WordToTrainProvider::class);
         $throwable = new RuntimeException('ooops');
         $expectedResponse = ErrorResponse::serverError($this->url, $throwable);
 
-        $this->getWordToTrainHandler->expects($this->once())
+        $getWordToTrainMock->expects($this->once())
             ->method('handle')
             ->with($this->getWordToTrainCommand)
             ->willThrowException($throwable);
@@ -137,25 +143,20 @@ class WordTrainerTest extends TestCase
             ->method('error')
             ->with($throwable);
 
-        $trainer = new WordTrainer(
-            $this->loggerMock,
-            $this->getWordToTrainHandler,
-            $this->saveTrainedWordHandler,
-            $this->url
-        );
-
-        $response = $trainer->getWordToTrain($this->authenticatedUserMock);
+        $trainer = $this->createTrainer($getWordToTrainMock, $this->createStub(WordProgressUpdater::class));
+        $response = $trainer->getWordToTrain($this->createAuthenticatedUserMock());
         $this->assertions($expectedResponse, $response);
     }
 
 
     public function testCanSaveSuccess(): void
     {
+        $saveTrainedWordMock = $this->createMock(WordProgressUpdater::class);
         $expectedResponse = NoContentResponse::vocabularyTrainedSuccessfully($this->url);
 
         $request = $this->getRequest();
 
-        $this->saveTrainedWordHandler->expects($this->once())
+        $saveTrainedWordMock->expects($this->once())
             ->method('handle')
             ->with($this->saveTrainedWordCommand);
 
@@ -168,14 +169,8 @@ class WordTrainerTest extends TestCase
                 )
             );
 
-        $trainer = new WordTrainer(
-            $this->loggerMock,
-            $this->getWordToTrainHandler,
-            $this->saveTrainedWordHandler,
-            $this->url
-        );
-
-        $response = $trainer->saveSuccess($this->authenticatedUserMock, $request);
+        $trainer = $this->createTrainer($this->createStub(WordToTrainProvider::class), $saveTrainedWordMock);
+        $response = $trainer->saveSuccess($this->createAuthenticatedUserMock(), $request);
         $this->assertions($expectedResponse, $response);
     }
 
@@ -195,12 +190,13 @@ class WordTrainerTest extends TestCase
 
     public function testReturnsErrorResponseOnMissingParameterWhileTryingToGetWordToTrain(): void
     {
+        $saveTrainedWordMock = $this->createMock(WordProgressUpdater::class);
         $throwable = new RuntimeException('ooops', ResponseCode::badRequest->value);
         $expectedResponse = ErrorResponse::badRequest($this->url, $throwable);
 
         $request = $this->getRequest();
 
-        $this->saveTrainedWordHandler->expects($this->once())
+        $saveTrainedWordMock->expects($this->once())
             ->method('handle')
             ->with($this->saveTrainedWordCommand)
             ->willThrowException($throwable);
@@ -211,26 +207,21 @@ class WordTrainerTest extends TestCase
             ->method('error')
             ->with($throwable);
 
-        $trainer = new WordTrainer(
-            $this->loggerMock,
-            $this->getWordToTrainHandler,
-            $this->saveTrainedWordHandler,
-            $this->url
-        );
-
-        $response = $trainer->saveSuccess($this->authenticatedUserMock, $request);
+        $trainer = $this->createTrainer($this->createStub(WordToTrainProvider::class), $saveTrainedWordMock);
+        $response = $trainer->saveSuccess($this->createAuthenticatedUserMock(), $request);
         $this->assertions($expectedResponse, $response);
     }
 
 
     public function testReturnsErrorResponseIfWordIsNotFoundWhileTryingToGetWordToTrain(): void
     {
+        $saveTrainedWordMock = $this->createMock(WordProgressUpdater::class);
         $throwable = new RuntimeException('ooops', ResponseCode::notFound->value);
         $expectedResponse = ErrorResponse::notFound($this->url, $throwable);
 
         $request = $this->getRequest();
 
-        $this->saveTrainedWordHandler->expects($this->once())
+        $saveTrainedWordMock->expects($this->once())
             ->method('handle')
             ->with($this->saveTrainedWordCommand)
             ->willThrowException($throwable);
@@ -241,26 +232,21 @@ class WordTrainerTest extends TestCase
             ->method('error')
             ->with($throwable);
 
-        $trainer = new WordTrainer(
-            $this->loggerMock,
-            $this->getWordToTrainHandler,
-            $this->saveTrainedWordHandler,
-            $this->url
-        );
-
-        $response = $trainer->saveSuccess($this->authenticatedUserMock, $request);
+        $trainer = $this->createTrainer($this->createStub(WordToTrainProvider::class), $saveTrainedWordMock);
+        $response = $trainer->saveSuccess($this->createAuthenticatedUserMock(), $request);
         $this->assertions($expectedResponse, $response);
     }
 
 
     public function testReturnsErrorResponseOnAnyOtherErrorWhileTryingToGetWordToTrain(): void
     {
+        $saveTrainedWordMock = $this->createMock(WordProgressUpdater::class);
         $throwable = new RuntimeException('ooops', ResponseCode::serverError->value);
         $expectedResponse = ErrorResponse::serverError($this->url, $throwable);
 
         $request = $this->getRequest();
 
-        $this->saveTrainedWordHandler->expects($this->once())
+        $saveTrainedWordMock->expects($this->once())
             ->method('handle')
             ->with($this->saveTrainedWordCommand)
             ->willThrowException($throwable);
@@ -271,14 +257,8 @@ class WordTrainerTest extends TestCase
             ->method('error')
             ->with($throwable);
 
-        $trainer = new WordTrainer(
-            $this->loggerMock,
-            $this->getWordToTrainHandler,
-            $this->saveTrainedWordHandler,
-            $this->url
-        );
-
-        $response = $trainer->saveSuccess($this->authenticatedUserMock, $request);
+        $trainer = $this->createTrainer($this->createStub(WordToTrainProvider::class), $saveTrainedWordMock);
+        $response = $trainer->saveSuccess($this->createAuthenticatedUserMock(), $request);
         $this->assertions($expectedResponse, $response);
     }
 }

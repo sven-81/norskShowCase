@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace norsk\api\infrastructure\persistence;
 
-class GenericSqlStatement implements SqlStatement
+readonly class GenericSqlStatement implements SqlStatement
 {
-    private function __construct(private readonly string $sqlStatement)
+    private function __construct(private string $sqlStatement)
     {
     }
 

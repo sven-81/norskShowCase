@@ -13,7 +13,6 @@ use Psr\Http\Message\ServerRequestInterface;
 
 readonly class RouteHandlerWithAuthenticatedUser
 {
-
     private function __construct(
         private ControllerResolver $controllerResolver,
         private ControllerName $controllerName,

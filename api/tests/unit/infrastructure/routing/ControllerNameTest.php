@@ -11,11 +11,10 @@ use PHPUnit\Framework\TestCase;
 #[CoversClass(ControllerName::class)]
 class ControllerNameTest extends TestCase
 {
-
     public function testCanUseNameAsString(): void
     {
-        $wordTrainerMock = $this->createMock(WordTrainer::class);
-        $controllerName = ControllerName::of($wordTrainerMock)->asString();
+        $wordTrainerStub = $this->createStub(WordTrainer::class);
+        $controllerName = ControllerName::of($wordTrainerStub)->asString();
 
         self::assertStringContainsString('WordTrainer', $controllerName);
     }

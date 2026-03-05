@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace norsk\api\trainer\domain;
 
-use norsk\api\shared\infrastructure\http\response\ResponseCode;
+use norsk\api\shared\domain\DomainExceptionCode;
 use OutOfRangeException;
 
 class SuccessCounter
@@ -38,7 +38,7 @@ class SuccessCounter
         if ($number < 0) {
             throw new OutOfRangeException(
                 'Given SuccessCounter is not a positive number: ' . $number,
-                ResponseCode::unprocessable->value
+                DomainExceptionCode::invalidInput->value
             );
         }
     }
@@ -46,11 +46,7 @@ class SuccessCounter
 
     public function isInitial(): bool
     {
-        if ($this->asInt() === 0) {
-            return true;
-        }
-
-        return false;
+        return $this->asInt() === 0;
     }
 
 

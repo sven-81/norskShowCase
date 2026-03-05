@@ -11,7 +11,6 @@ use norsk\api\shared\infrastructure\http\request\Payload;
 
 readonly class UpdateVerb
 {
-
     private function __construct(
         private Id $id,
         private German $german,

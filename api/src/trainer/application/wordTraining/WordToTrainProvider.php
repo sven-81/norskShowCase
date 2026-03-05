@@ -4,21 +4,21 @@ declare(strict_types=1);
 
 namespace norsk\api\trainer\application\wordTraining;
 
+use norsk\api\shared\domain\TrainingVocabulary;
 use norsk\api\trainer\application\wordTraining\useCases\GetWordToTrain;
 use norsk\api\trainer\domain\RandomGenerator;
-use norsk\api\trainer\domain\words\TrainingWord;
 use norsk\api\trainer\domain\words\TrainingWordReadingRepository;
 
-class WordToTrainProvider
+readonly class WordToTrainProvider
 {
     public function __construct(
-        private readonly TrainingWordReadingRepository $wordRepository,
-        private readonly RandomGenerator $randomGenerator
+        private TrainingWordReadingRepository $wordRepository,
+        private RandomGenerator $randomGenerator
     ) {
     }
 
 
-    public function handle(GetWordToTrain $command): TrainingWord
+    public function handle(GetWordToTrain $command): TrainingVocabulary
     {
         $allWordsForUser = $this->wordRepository->getAllWordsFor($command->getUserName());
 

@@ -13,7 +13,6 @@ class GetAllWordsTest extends TestCase
     public function testGetAllWordsCommandIsSingleton(): void
     {
         $command = GetAllWords::create();
-        /** @phpstan-ignore-next-line */
         $this->assertInstanceOf(GetAllWords::class, $command);
     }
 }

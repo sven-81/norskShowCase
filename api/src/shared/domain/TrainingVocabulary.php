@@ -8,7 +8,5 @@ use norsk\api\trainer\domain\SuccessCounter;
 
 interface TrainingVocabulary extends Vocabulary
 {
-
     public function getSuccessCounter(): SuccessCounter;
-
 }

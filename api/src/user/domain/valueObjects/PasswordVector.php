@@ -6,11 +6,11 @@ namespace norsk\api\user\domain\valueObjects;
 
 use SensitiveParameter;
 
-class PasswordVector
+readonly class PasswordVector
 {
     private function __construct(
-        private readonly Salt $salt,
-        private readonly Pepper $pepper
+        private Salt $salt,
+        private Pepper $pepper
     ) {
     }
 

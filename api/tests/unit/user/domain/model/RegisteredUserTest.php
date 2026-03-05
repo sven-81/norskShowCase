@@ -36,11 +36,11 @@ class RegisteredUserTest extends TestCase
         $this->lastName = LastName::by('someLastName');
         $inputPassword = InputPassword::by('someLoooongPassword');
 
-        $passwordVectorMock = $this->createMock(PasswordVector::class);
-        $passwordVectorMock->method('getPepper')
+        $passwordVectorStub = $this->createStub(PasswordVector::class);
+        $passwordVectorStub->method('getPepper')
             ->willReturn(Pepper::by('iwwBYerIjfYhu04X0mm5GvN4woua6yqI'));
         $this->salt = Salt::by('8872879119a342e522c213e265f464b343a2d8156ab506936e7f3a80cc4f584c');
-        $passwordVectorMock->method('getSalt')
+        $passwordVectorStub->method('getSalt')
             ->willReturn($this->salt);
 
         $this->user = RegisteredUser::create(
@@ -48,7 +48,7 @@ class RegisteredUserTest extends TestCase
             $this->firstName,
             $this->lastName,
             $inputPassword,
-            $passwordVectorMock
+            $passwordVectorStub
         );
     }
 
@@ -73,7 +73,7 @@ class RegisteredUserTest extends TestCase
 
     public function testCanGetPasswordHash(): void
     {
-        self::assertStringStartsWith('$2y$10$', $this->user->getPasswordHash()->asHashString());
+        self::assertStringStartsWith('$2y$12$', $this->user->getPasswordHash()->asHashString());
     }
 
 

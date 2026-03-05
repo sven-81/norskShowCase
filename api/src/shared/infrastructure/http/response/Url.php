@@ -6,10 +6,9 @@ namespace norsk\api\shared\infrastructure\http\response;
 
 use InvalidArgumentException;
 
-class Url
+readonly class Url
 {
-
-    private function __construct(private readonly string $url)
+    private function __construct(private string $url)
     {
     }
 

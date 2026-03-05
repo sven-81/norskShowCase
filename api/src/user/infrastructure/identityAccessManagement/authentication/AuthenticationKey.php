@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace norsk\api\user\infrastructure\identityAccessManagement\authentication;
 
-class AuthenticationKey
+readonly class AuthenticationKey
 {
-    private function __construct(private readonly string $key)
+    private function __construct(private string $key)
     {
     }
 

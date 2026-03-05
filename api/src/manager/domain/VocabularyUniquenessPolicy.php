@@ -10,7 +10,5 @@ use norsk\api\shared\domain\Norsk;
 
 interface VocabularyUniquenessPolicy
 {
-
     public function ensureVocabularyIsNotAlreadyPersisted(?Id $id, German $german, Norsk $norsk): void;
-
 }

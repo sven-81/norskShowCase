@@ -11,7 +11,6 @@ use PHPUnit\Framework\TestCase;
 #[CoversClass(Method::class)]
 class MethodTest extends TestCase
 {
-
     public function testCanUseMethodAsString(): void
     {
         $string = 'doSomething';
@@ -26,5 +25,4 @@ class MethodTest extends TestCase
         $this->expectExceptionObject(new InvalidArgumentException(message: 'Method cannot be empty.'));
         Method::of('');
     }
-
 }

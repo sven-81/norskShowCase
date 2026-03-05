@@ -16,10 +16,10 @@ use norsk\api\manager\application\wordManaging\WordCreator;
 use norsk\api\manager\application\wordManaging\WordRemover;
 use norsk\api\manager\application\wordManaging\WordsProvider;
 use norsk\api\manager\application\wordManaging\WordUpdater;
+use norsk\api\manager\domain\ManagedVocabularies;
 use norsk\api\manager\infrastructure\web\responses\VocabularyListResponse;
 use norsk\api\shared\application\Json;
 use norsk\api\shared\domain\Id;
-use norsk\api\shared\domain\Vocabularies;
 use norsk\api\shared\infrastructure\http\request\Payload;
 use norsk\api\shared\infrastructure\http\response\ResponseCode;
 use norsk\api\shared\infrastructure\http\response\responses\CreatedResponse;
@@ -43,19 +43,9 @@ class WordManagerTest extends TestCase
 
     private Url $url;
 
-    private WordsProvider|MockObject $wordsProviderMock;
-
-    private WordCreator|MockObject $wordCreatorMock;
-
-    private WordUpdater|MockObject $wordUpdaterMock;
-
-    private WordRemover|MockObject $wordRemoverMock;
-
     private Id $id;
 
     private UserName $userName;
-
-    private AuthenticatedUserInterface|MockObject $authenticatedUserMock;
 
 
     protected function setUp(): void
@@ -64,33 +54,44 @@ class WordManagerTest extends TestCase
         $this->logger = $this->createMock(Logger::class);
         $this->id = Id::by(1);
         $this->userName = UserName::by('someBody');
+    }
 
-        $this->authenticatedUserMock = $this->createMock(AuthenticatedUserInterface::class);
 
-        $this->wordsProviderMock = $this->createMock(WordsProvider::class);
-        $this->wordCreatorMock = $this->createMock(WordCreator::class);
-        $this->wordUpdaterMock = $this->createMock(WordUpdater::class);
-        $this->wordRemoverMock = $this->createMock(WordRemover::class);
+    private function createWordManager(
+        WordsProvider $wordsProvider,
+        WordCreator $wordCreator,
+        WordUpdater $wordUpdater,
+        WordRemover $wordRemover,
+    ): WordManager {
+        return new WordManager(
+            $this->logger,
+            $wordsProvider,
+            $wordCreator,
+            $wordUpdater,
+            $wordRemover,
+            $this->url
+        );
     }
 
 
     public function testCanGetAllWords(): void
     {
-        $wordManager = new WordManager(
-            $this->logger,
-            $this->wordsProviderMock,
-            $this->wordCreatorMock,
-            $this->wordUpdaterMock,
-            $this->wordRemoverMock,
-            $this->url
+        $wordsProviderMock = $this->createMock(WordsProvider::class);
+        $authenticatedUserMock = $this->createMock(AuthenticatedUserInterface::class);
+
+        $wordManager = $this->createWordManager(
+            $wordsProviderMock,
+            $this->createStub(WordCreator::class),
+            $this->createStub(WordUpdater::class),
+            $this->createStub(WordRemover::class),
         );
 
-        $this->authenticatedUserMock->expects($this->once())
+        $authenticatedUserMock->expects($this->once())
             ->method('getUserName')
             ->willReturn($this->userName);
 
         $command = GetAllWords::create();
-        $this->wordsProviderMock->expects($this->once())
+        $wordsProviderMock->expects($this->once())
             ->method('handle')
             ->with($command)
             ->willReturn($this->getWords());
@@ -108,15 +109,15 @@ class WordManagerTest extends TestCase
         $json = Json::fromString($wordsJson);
         $expectedWords = VocabularyListResponse::create($this->url, $json);
 
-        $response = $wordManager->getAllWords($this->authenticatedUserMock);
+        $response = $wordManager->getAllWords($authenticatedUserMock);
         $this->assertions($expectedWords, $response);
     }
 
 
-    private function getWords(): Vocabularies
+    private function getWords(): ManagedVocabularies
     {
-        $word = WordProvider::trainingWordArchipelago();
-        $words = Vocabularies::create();
+        $word = WordProvider::managedWordArchipelago();
+        $words = ManagedVocabularies::create();
         $words->add($word);
 
         return $words;
@@ -140,8 +141,9 @@ class WordManagerTest extends TestCase
 
     public function testReturnsErrorResponseOnThrownExceptionIfCannotGetAllWords(): void
     {
+        $wordsProviderMock = $this->createMock(WordsProvider::class);
         $throwable = new RuntimeException('ooops');
-        $this->wordsProviderMock->expects($this->once())
+        $wordsProviderMock->expects($this->once())
             ->method('handle')
             ->willThrowException($throwable);
 
@@ -153,15 +155,13 @@ class WordManagerTest extends TestCase
 
         $expectedWords = ErrorResponse::serverError($this->url, $throwable);
 
-        $wordManager = new WordManager(
-            $this->logger,
-            $this->wordsProviderMock,
-            $this->wordCreatorMock,
-            $this->wordUpdaterMock,
-            $this->wordRemoverMock,
-            $this->url
+        $wordManager = $this->createWordManager(
+            $wordsProviderMock,
+            $this->createStub(WordCreator::class),
+            $this->createStub(WordUpdater::class),
+            $this->createStub(WordRemover::class),
         );
-        $response = $wordManager->getAllWords($this->authenticatedUserMock);
+        $response = $wordManager->getAllWords($this->createStub(AuthenticatedUserInterface::class));
 
         $this->assertions($expectedWords, $response);
     }
@@ -169,11 +169,12 @@ class WordManagerTest extends TestCase
 
     public function testCanCreateWord(): void
     {
-        $requestMock = $this->createRequest();
+        $wordCreatorMock = $this->createMock(WordCreator::class);
+        $requestStub = $this->createRequestStub();
 
-        $payload = Payload::of($requestMock);
+        $payload = Payload::of($requestStub);
         $command = CreateWord::createBy($payload);
-        $this->wordCreatorMock->expects($this->once())
+        $wordCreatorMock->expects($this->once())
             ->method('handle')
             ->with($command);
 
@@ -187,38 +188,37 @@ class WordManagerTest extends TestCase
 
         $expectedResponse = CreatedResponse::savedVocabulary($this->url);
 
-        $wordManager = new WordManager(
-            $this->logger,
-            $this->wordsProviderMock,
-            $this->wordCreatorMock,
-            $this->wordUpdaterMock,
-            $this->wordRemoverMock,
-            $this->url
+        $wordManager = $this->createWordManager(
+            $this->createStub(WordsProvider::class),
+            $wordCreatorMock,
+            $this->createStub(WordUpdater::class),
+            $this->createStub(WordRemover::class),
         );
-        $response = $wordManager->createWord($this->authenticatedUserMock, $requestMock);
+        $response = $wordManager->createWord($this->createStub(AuthenticatedUserInterface::class), $requestStub);
 
         $this->assertions($expectedResponse, $response);
     }
 
 
-    private function createRequest(): MockObject|ServerRequest
+    private function createRequestStub(): ServerRequest
     {
         $expectedArray = WordProvider::managedWordArchipelagoAsArray();
 
-        $requestMock = $this->createMock(ServerRequest::class);
-        $requestMock->method('getParsedBody')
+        $requestStub = $this->createStub(ServerRequest::class);
+        $requestStub->method('getParsedBody')
             ->willReturn($expectedArray);
 
-        return $requestMock;
+        return $requestStub;
     }
 
 
     public function testReturnsErrorResponseOnThrownExceptionIfCannotCreateWordBecauseItAlreadyExists(): void
     {
-        $requestMock = $this->createRequest();
+        $wordCreatorMock = $this->createMock(WordCreator::class);
+        $requestStub = $this->createRequestStub();
 
         $throwable = new RuntimeException('ooops', ResponseCode::conflict->value);
-        $this->wordCreatorMock->expects($this->once())
+        $wordCreatorMock->expects($this->once())
             ->method('handle')
             ->willThrowException($throwable);
 
@@ -230,15 +230,13 @@ class WordManagerTest extends TestCase
 
         $expectedResponse = ErrorResponse::conflict($this->url, $throwable);
 
-        $wordManager = new WordManager(
-            $this->logger,
-            $this->wordsProviderMock,
-            $this->wordCreatorMock,
-            $this->wordUpdaterMock,
-            $this->wordRemoverMock,
-            $this->url
+        $wordManager = $this->createWordManager(
+            $this->createStub(WordsProvider::class),
+            $wordCreatorMock,
+            $this->createStub(WordUpdater::class),
+            $this->createStub(WordRemover::class),
         );
-        $response = $wordManager->createWord($this->authenticatedUserMock, $requestMock);
+        $response = $wordManager->createWord($this->createStub(AuthenticatedUserInterface::class), $requestStub);
 
         $this->assertions($expectedResponse, $response);
     }
@@ -246,10 +244,11 @@ class WordManagerTest extends TestCase
 
     public function testReturnsErrorResponseOnThrownExceptionIfCannotCreateWordDueToSomeOtherError(): void
     {
-        $requestMock = $this->createRequest();
+        $wordCreatorMock = $this->createMock(WordCreator::class);
+        $requestStub = $this->createRequestStub();
 
         $throwable = new RuntimeException('ooops', ResponseCode::badRequest->value);
-        $this->wordCreatorMock->expects($this->once())
+        $wordCreatorMock->expects($this->once())
             ->method('handle')
             ->willThrowException($throwable);
 
@@ -261,15 +260,13 @@ class WordManagerTest extends TestCase
 
         $expectedResponse = ErrorResponse::serverError($this->url, $throwable);
 
-        $wordManager = new WordManager(
-            $this->logger,
-            $this->wordsProviderMock,
-            $this->wordCreatorMock,
-            $this->wordUpdaterMock,
-            $this->wordRemoverMock,
-            $this->url
+        $wordManager = $this->createWordManager(
+            $this->createStub(WordsProvider::class),
+            $wordCreatorMock,
+            $this->createStub(WordUpdater::class),
+            $this->createStub(WordRemover::class),
         );
-        $response = $wordManager->createWord($this->authenticatedUserMock, $requestMock);
+        $response = $wordManager->createWord($this->createStub(AuthenticatedUserInterface::class), $requestStub);
 
         $this->assertions($expectedResponse, $response);
     }
@@ -277,11 +274,12 @@ class WordManagerTest extends TestCase
 
     public function testCanUpdate(): void
     {
+        $wordUpdaterMock = $this->createMock(WordUpdater::class);
         $request = $this->updateRequest();
         $payload = Payload::of($request);
 
         $command = UpdateWord::createBy($this->id, $payload);
-        $this->wordUpdaterMock->expects($this->once())
+        $wordUpdaterMock->expects($this->once())
             ->method('handle')
             ->with($command);
 
@@ -296,15 +294,13 @@ class WordManagerTest extends TestCase
 
         $expectedResponse = NoContentResponse::updatedVocabularySuccessfully($this->url);
 
-        $wordManager = new WordManager(
-            $this->logger,
-            $this->wordsProviderMock,
-            $this->wordCreatorMock,
-            $this->wordUpdaterMock,
-            $this->wordRemoverMock,
-            $this->url
+        $wordManager = $this->createWordManager(
+            $this->createStub(WordsProvider::class),
+            $this->createStub(WordCreator::class),
+            $wordUpdaterMock,
+            $this->createStub(WordRemover::class),
         );
-        $response = $wordManager->update($this->authenticatedUserMock, $request);
+        $response = $wordManager->update($this->createStub(AuthenticatedUserInterface::class), $request);
 
         $this->assertions($expectedResponse, $response);
     }
@@ -329,13 +325,14 @@ class WordManagerTest extends TestCase
 
     public function testReturnsErrorResponseIfCannotUpdateWordBecauseItAlreadyExistsForNewVersion(): void
     {
+        $wordUpdaterMock = $this->createMock(WordUpdater::class);
         $request = $this->updateRequest();
         $payload = Payload::of($request);
 
         $throwable = new RuntimeException('ooops', ResponseCode::conflict->value);
 
         $command = UpdateWord::createBy($this->id, $payload);
-        $this->wordUpdaterMock->expects($this->once())
+        $wordUpdaterMock->expects($this->once())
             ->method('handle')
             ->with($command)
             ->willThrowException($throwable);
@@ -348,15 +345,13 @@ class WordManagerTest extends TestCase
 
         $expectedResponse = ErrorResponse::conflict($this->url, $throwable);
 
-        $wordManager = new WordManager(
-            $this->logger,
-            $this->wordsProviderMock,
-            $this->wordCreatorMock,
-            $this->wordUpdaterMock,
-            $this->wordRemoverMock,
-            $this->url
+        $wordManager = $this->createWordManager(
+            $this->createStub(WordsProvider::class),
+            $this->createStub(WordCreator::class),
+            $wordUpdaterMock,
+            $this->createStub(WordRemover::class),
         );
-        $response = $wordManager->update($this->authenticatedUserMock, $request);
+        $response = $wordManager->update($this->createStub(AuthenticatedUserInterface::class), $request);
 
         $this->assertions($expectedResponse, $response);
     }
@@ -364,13 +359,14 @@ class WordManagerTest extends TestCase
 
     public function testReturnsErrorResponseOnThrownExceptionIfCannotUpdateWordBecauseItIsNotFound(): void
     {
+        $wordUpdaterMock = $this->createMock(WordUpdater::class);
         $request = $this->updateRequest();
         $payload = Payload::of($request);
 
         $throwable = new RuntimeException('ooops', ResponseCode::notFound->value);
 
         $command = UpdateWord::createBy($this->id, $payload);
-        $this->wordUpdaterMock->expects($this->once())
+        $wordUpdaterMock->expects($this->once())
             ->method('handle')
             ->with($command)
             ->willThrowException($throwable);
@@ -383,15 +379,13 @@ class WordManagerTest extends TestCase
 
         $expectedResponse = ErrorResponse::notFound($this->url, $throwable);
 
-        $wordManager = new WordManager(
-            $this->logger,
-            $this->wordsProviderMock,
-            $this->wordCreatorMock,
-            $this->wordUpdaterMock,
-            $this->wordRemoverMock,
-            $this->url
+        $wordManager = $this->createWordManager(
+            $this->createStub(WordsProvider::class),
+            $this->createStub(WordCreator::class),
+            $wordUpdaterMock,
+            $this->createStub(WordRemover::class),
         );
-        $response = $wordManager->update($this->authenticatedUserMock, $request);
+        $response = $wordManager->update($this->createStub(AuthenticatedUserInterface::class), $request);
 
         $this->assertions($expectedResponse, $response);
     }
@@ -399,13 +393,14 @@ class WordManagerTest extends TestCase
 
     public function testReturnsErrorResponseOnThrownExceptionIfCannotUpdateDueToSomeOtherError(): void
     {
+        $wordUpdaterMock = $this->createMock(WordUpdater::class);
         $request = $this->updateRequest();
         $payload = Payload::of($request);
 
         $throwable = new RuntimeException('ooops', ResponseCode::serverError->value);
 
         $command = UpdateWord::createBy($this->id, $payload);
-        $this->wordUpdaterMock->expects($this->once())
+        $wordUpdaterMock->expects($this->once())
             ->method('handle')
             ->with($command)
             ->willThrowException($throwable);
@@ -418,15 +413,13 @@ class WordManagerTest extends TestCase
 
         $expectedResponse = ErrorResponse::serverError($this->url, $throwable);
 
-        $wordManager = new WordManager(
-            $this->logger,
-            $this->wordsProviderMock,
-            $this->wordCreatorMock,
-            $this->wordUpdaterMock,
-            $this->wordRemoverMock,
-            $this->url
+        $wordManager = $this->createWordManager(
+            $this->createStub(WordsProvider::class),
+            $this->createStub(WordCreator::class),
+            $wordUpdaterMock,
+            $this->createStub(WordRemover::class),
         );
-        $response = $wordManager->update($this->authenticatedUserMock, $request);
+        $response = $wordManager->update($this->createStub(AuthenticatedUserInterface::class), $request);
 
         $this->assertions($expectedResponse, $response);
     }
@@ -434,10 +427,11 @@ class WordManagerTest extends TestCase
 
     public function testCanDelete(): void
     {
+        $wordRemoverMock = $this->createMock(WordRemover::class);
         $request = $this->deleteRequest();
 
         $command = DeleteWord::createBy($this->id);
-        $this->wordRemoverMock->expects($this->once())
+        $wordRemoverMock->expects($this->once())
             ->method('handle')
             ->with($command);
 
@@ -450,15 +444,13 @@ class WordManagerTest extends TestCase
         $json = Json::fromString('{"message":"Removed word with id: 1"}');
         $expectedResponse = SuccessResponse::deletedRecord($this->url, $json);
 
-        $wordManager = new WordManager(
-            $this->logger,
-            $this->wordsProviderMock,
-            $this->wordCreatorMock,
-            $this->wordUpdaterMock,
-            $this->wordRemoverMock,
-            $this->url
+        $wordManager = $this->createWordManager(
+            $this->createStub(WordsProvider::class),
+            $this->createStub(WordCreator::class),
+            $this->createStub(WordUpdater::class),
+            $wordRemoverMock,
         );
-        $response = $wordManager->delete($this->authenticatedUserMock, $request);
+        $response = $wordManager->delete($this->createStub(AuthenticatedUserInterface::class), $request);
 
         $this->assertions($expectedResponse, $response);
     }
@@ -479,12 +471,13 @@ class WordManagerTest extends TestCase
 
     public function testReturnsErrorResponseOnThrownExceptionIfCannotDeleteWordBecauseItIsNotFound(): void
     {
+        $wordRemoverMock = $this->createMock(WordRemover::class);
         $request = $this->deleteRequest();
 
         $throwable = new RuntimeException('ooops', ResponseCode::notFound->value);
 
         $command = DeleteWord::createBy($this->id);
-        $this->wordRemoverMock->expects($this->once())
+        $wordRemoverMock->expects($this->once())
             ->method('handle')
             ->with($command)
             ->willThrowException($throwable);
@@ -497,15 +490,13 @@ class WordManagerTest extends TestCase
 
         $expectedResponse = ErrorResponse::notFound($this->url, $throwable);
 
-        $wordManager = new WordManager(
-            $this->logger,
-            $this->wordsProviderMock,
-            $this->wordCreatorMock,
-            $this->wordUpdaterMock,
-            $this->wordRemoverMock,
-            $this->url
+        $wordManager = $this->createWordManager(
+            $this->createStub(WordsProvider::class),
+            $this->createStub(WordCreator::class),
+            $this->createStub(WordUpdater::class),
+            $wordRemoverMock,
         );
-        $response = $wordManager->delete($this->authenticatedUserMock, $request);
+        $response = $wordManager->delete($this->createStub(AuthenticatedUserInterface::class), $request);
 
         $this->assertions($expectedResponse, $response);
     }
@@ -513,12 +504,13 @@ class WordManagerTest extends TestCase
 
     public function testReturnsErrorResponseOnThrownExceptionIfCannotDeleteDueToSomeOtherError(): void
     {
+        $wordRemoverMock = $this->createMock(WordRemover::class);
         $request = $this->deleteRequest();
 
         $throwable = new RuntimeException('ooops', ResponseCode::serverError->value);
 
         $command = DeleteWord::createBy($this->id);
-        $this->wordRemoverMock->expects($this->once())
+        $wordRemoverMock->expects($this->once())
             ->method('handle')
             ->with($command)
             ->willThrowException($throwable);
@@ -531,15 +523,13 @@ class WordManagerTest extends TestCase
 
         $expectedResponse = ErrorResponse::serverError($this->url, $throwable);
 
-        $wordManager = new WordManager(
-            $this->logger,
-            $this->wordsProviderMock,
-            $this->wordCreatorMock,
-            $this->wordUpdaterMock,
-            $this->wordRemoverMock,
-            $this->url
+        $wordManager = $this->createWordManager(
+            $this->createStub(WordsProvider::class),
+            $this->createStub(WordCreator::class),
+            $this->createStub(WordUpdater::class),
+            $wordRemoverMock,
         );
-        $response = $wordManager->delete($this->authenticatedUserMock, $request);
+        $response = $wordManager->delete($this->createStub(AuthenticatedUserInterface::class), $request);
 
         $this->assertions($expectedResponse, $response);
     }

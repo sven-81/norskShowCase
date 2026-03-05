@@ -11,14 +11,15 @@ use norsk\api\shared\domain\Id;
 use norsk\api\shared\domain\VocabularyType;
 use norsk\api\shared\infrastructure\http\response\ResponseCode;
 use norsk\api\trainer\domain\exceptions\NoRecordInDatabaseException;
-use norsk\api\trainer\domain\WritingRepository;
+use norsk\api\trainer\domain\verbs\VerbTrainingWritingRepository;
+use norsk\api\trainer\domain\words\WordTrainingWritingRepository;
 use norsk\api\trainer\infrastructure\persistence\queries\verbs\SaveTrainedVerbSql;
 use norsk\api\trainer\infrastructure\persistence\queries\words\SaveTrainedWordSql;
 use norsk\api\user\domain\valueObjects\UserName;
 use RuntimeException;
 use Throwable;
 
-class TrainingWriter implements WritingRepository
+class TrainingWriter implements WordTrainingWritingRepository, VerbTrainingWritingRepository
 {
     private const int CONSTRAINT_ERROR = 1452;
 

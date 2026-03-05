@@ -12,8 +12,8 @@ use norsk\api\shared\infrastructure\http\response\ResponseCode;
 use norsk\api\shared\infrastructure\http\response\responses\ErrorResponse;
 use norsk\api\shared\infrastructure\http\response\UnauthorizedResponse;
 use norsk\api\shared\infrastructure\http\response\Url;
+use norsk\api\user\domain\model\AuthorizationResult;
 use norsk\api\user\domain\model\JwtAuthenticatedUser;
-use norsk\api\user\domain\service\AuthorizationStrategy;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -28,13 +28,11 @@ class AuthorizationTest extends TestCase
 
     private Logger|MockObject $loggerMock;
 
-    private AuthorizationStrategy|MockObject $strategyMock;
+    private AuthorizationMiddlewareStrategy|MockObject $strategyMock;
 
     private MockObject|RequestHandlerInterface $handlerMock;
 
     private Url $url;
-
-    private AuthorizationDecision|MockObject $authorizedDecisionMock;
 
     private string $userName;
 
@@ -45,12 +43,10 @@ class AuthorizationTest extends TestCase
     {
         $this->url = Url::by('http://foo');
         $this->loggerMock = $this->createMock(Logger::class);
-        $this->strategyMock = $this->createMock(AuthorizationStrategy::class);
+        $this->strategyMock = $this->createMock(AuthorizationMiddlewareStrategy::class);
 
         $this->requestMock = $this->createMock(ServerRequestInterface::class);
         $this->handlerMock = $this->createMock(RequestHandlerInterface::class);
-
-        $this->authorizedDecisionMock = $this->createMock(AuthorizationDecision::class);
 
         $this->userName = 'someUsername';
         $class = new stdClass();
@@ -72,22 +68,23 @@ class AuthorizationTest extends TestCase
             ->method('handle')
             ->with($this->requestMock);
 
-        $this->authorizedDecisionMock->expects($this->once())
-            ->method('failed')
-            ->willReturn(false);
-
         $logMessage = LogMessage::fromString('Authenticated user: ' . $this->userName);
+
+        $grantedResult = AuthorizationResult::granted(
+            $this->authenticatedUser->getUserName(),
+            $this->authenticatedUser->getRole()
+        );
 
         $this->strategyMock->expects($this->once())
             ->method('authorize')
             ->with($this->authenticatedUser)
-            ->willReturn($this->authorizedDecisionMock);
+            ->willReturn($grantedResult);
         $this->strategyMock->expects($this->once())
             ->method('checkActive')
             ->with($this->authenticatedUser);
         $this->strategyMock->expects($this->once())
             ->method('successLogging')
-            ->with($this->authorizedDecisionMock)
+            ->with($grantedResult)
             ->willReturn($logMessage);
 
         $this->loggerMock->expects($this->once())
@@ -108,14 +105,12 @@ class AuthorizationTest extends TestCase
             ->method('getAttribute')
             ->willReturn($this->authenticatedUser);
 
-        $this->authorizedDecisionMock->expects($this->once())
-            ->method('failed')
-            ->willReturn(true);
+        $deniedResult = AuthorizationResult::denied();
 
         $this->strategyMock->expects($this->once())
             ->method('authorize')
             ->with($this->authenticatedUser)
-            ->willReturn($this->authorizedDecisionMock);
+            ->willReturn($deniedResult);
 
         $this->strategyMock->expects($this->never())
             ->method('checkActive');
@@ -159,8 +154,6 @@ class AuthorizationTest extends TestCase
             ->method('authorize')
             ->willThrowException($exception);
 
-        $this->authorizedDecisionMock->expects($this->never())
-            ->method('failed');
 
         $this->handlerMock->expects($this->never())
             ->method('handle');

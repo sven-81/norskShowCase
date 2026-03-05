@@ -14,7 +14,6 @@ use Throwable;
 
 class TrainerExceptionMapper
 {
-
     public static function map(Throwable|Exception $throwable, Url $url): ResponseInterface
     {
         $code = $throwable->getCode();

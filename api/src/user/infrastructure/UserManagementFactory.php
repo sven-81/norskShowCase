@@ -17,13 +17,13 @@ use norsk\api\user\infrastructure\persistence\UsersWriter;
 use norsk\api\user\infrastructure\web\controller\Login;
 use norsk\api\user\infrastructure\web\controller\Registration;
 
-class UserManagementFactory
+readonly class UserManagementFactory
 {
     public function __construct(
-        private readonly Logger $logger,
-        private readonly DbConnection $dbConnection,
-        private readonly JwtService $jwtManagement,
-        private readonly AppConfig $appConfig
+        private Logger $logger,
+        private DbConnection $dbConnection,
+        private JwtService $jwtManagement,
+        private AppConfig $appConfig
     ) {
     }
 

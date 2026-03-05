@@ -5,11 +5,10 @@ declare(strict_types=1);
 namespace norsk\api\shared\domain;
 
 use InvalidArgumentException;
-use norsk\api\shared\infrastructure\http\response\ResponseCode;
 
-class Id
+readonly class Id
 {
-    private function __construct(private readonly int $id)
+    private function __construct(private int $id)
     {
     }
 
@@ -25,7 +24,7 @@ class Id
         if (!is_numeric($id)) {
             throw new InvalidArgumentException(
                 'Id has to be numeric: ' . $id,
-                ResponseCode::badRequest->value
+                DomainExceptionCode::badRequest->value
             );
         }
 

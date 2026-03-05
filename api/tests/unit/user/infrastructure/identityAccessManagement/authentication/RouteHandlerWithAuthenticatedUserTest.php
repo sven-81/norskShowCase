@@ -27,28 +27,28 @@ class RouteHandlerWithAuthenticatedUserTest extends TestCase
 
     private ServerRequestInterface|MockObject $requestMock;
 
-    private ResponseInterface|MockObject $responseMock;
+    private ResponseInterface $responseStub;
 
     private WordTrainer|MockObject $controllerMock;
 
-    private ResponseInterface|MockObject $controllerResponseMock;
+    private ResponseInterface $controllerResponseStub;
 
     private ControllerResolver|MockObject $controllerResolverMock;
 
-    private ControllerName|MockObject $controllerNameMock;
+    private ControllerName $controllerNameStub;
 
 
     protected function setUp(): void
     {
         $this->method = Method::of('saveSuccess');
         $this->requestMock = $this->createMock(ServerRequestInterface::class);
-        $this->responseMock = $this->createMock(ResponseInterface::class);
+        $this->responseStub = $this->createStub(ResponseInterface::class);
 
         $this->controllerMock = $this->createMock(WordTrainer::class);
-        $this->controllerResponseMock = $this->createMock(ResponseInterface::class);
+        $this->controllerResponseStub = $this->createStub(ResponseInterface::class);
 
         $this->controllerResolverMock = $this->createMock(ControllerResolver::class);
-        $this->controllerNameMock = $this->createMock(ControllerName::class);
+        $this->controllerNameStub = $this->createStub(ControllerName::class);
     }
 
 
@@ -62,13 +62,15 @@ class RouteHandlerWithAuthenticatedUserTest extends TestCase
             ->method('getRole')
             ->willReturn(Role::MANAGER);
 
-        $this->requestMock->method('getAttribute')
+        $this->requestMock->expects($this->exactly(2))
+            ->method('getAttribute')
             ->with(self::AUTHENTICATED_USER)
             ->willReturn($userMock);
 
         $this->controllerResolverMock
+            ->expects($this->once())
             ->method('resolve')
-            ->with($this->controllerNameMock)
+            ->with($this->controllerNameStub)
             ->willReturn($this->controllerMock);
 
         $user = JwtAuthenticatedUser::byRequest($this->requestMock);
@@ -76,15 +78,15 @@ class RouteHandlerWithAuthenticatedUserTest extends TestCase
         $this->controllerMock->expects($this->once())
             ->method('saveSuccess')
             ->with($user, $this->requestMock)
-            ->willReturn($this->controllerResponseMock);
+            ->willReturn($this->controllerResponseStub);
 
         $handler = RouteHandlerWithAuthenticatedUser::by(
             $this->controllerResolverMock,
-            $this->controllerNameMock,
+            $this->controllerNameStub,
             $this->method
         );
-        $result = $handler($this->requestMock, $this->responseMock, []);
+        $result = $handler($this->requestMock, $this->responseStub, []);
 
-        $this->assertSame($this->controllerResponseMock, $result);
+        $this->assertSame($this->controllerResponseStub, $result);
     }
 }

@@ -12,19 +12,18 @@ use norsk\api\shared\infrastructure\http\response\ResponseCode;
 use norsk\api\tests\provider\VocabularyTypeProvider;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
-use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 
 #[CoversClass(GermanRecordAlreadyInDatabaseException::class)]
 class GermanRecordAlreadyInDatabaseExceptionTest extends TestCase
 {
-    private MockObject|Identifier $identifierMock;
+    private Identifier $identifierStub;
 
 
     protected function setUp(): void
     {
-        $this->identifierMock = $this->createMock(Identifier::class);
-        $this->identifierMock->method('asMessageString')
+        $this->identifierStub = $this->createStub(Identifier::class);
+        $this->identifierStub->method('asMessageString')
             ->willReturn('testIdentifier');
     }
 
@@ -32,7 +31,7 @@ class GermanRecordAlreadyInDatabaseExceptionTest extends TestCase
     #[DataProvider('getVocabularyType')]
     public function testExceptionMessage(VocabularyType $vocabularyType): void
     {
-        $exception = new GermanRecordAlreadyInDatabaseException($this->identifierMock, $vocabularyType);
+        $exception = new GermanRecordAlreadyInDatabaseException($this->identifierStub, $vocabularyType);
 
         $this->assertSame(
             'German ' . $vocabularyType->value . ' already exists for testIdentifier',
@@ -68,7 +67,7 @@ class GermanRecordAlreadyInDatabaseExceptionTest extends TestCase
     #[DataProvider('getVocabularyType')]
     public function testExceptionCode(VocabularyType $vocabularyType): void
     {
-        $exception = new GermanRecordAlreadyInDatabaseException($this->identifierMock, $vocabularyType);
+        $exception = new GermanRecordAlreadyInDatabaseException($this->identifierStub, $vocabularyType);
 
         $this->assertSame(ResponseCode::conflict->value, $exception->getCode());
     }

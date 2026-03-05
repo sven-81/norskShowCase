@@ -40,19 +40,13 @@ class VerbTrainerTest extends TestCase
 
     private UserName $userName;
 
-    private TrainingVerb|MockObject $trainingVerbMock;
-
-    private VerbToTrainProvider|MockObject $getVerbToTrainHandler;
-
-    private VerbProgressUpdater|MockObject $saveTrainedVerbHandler;
+    private TrainingVerb $trainingVerbStub;
 
     private GetVerbToTrain $getVerbToTrainCommand;
 
     private SaveTrainedVerb $saveTrainedVerbCommand;
 
     private Json $body;
-
-    private AuthenticatedUserInterface|MockObject $authenticatedUserMock;
 
 
     protected function setUp(): void
@@ -64,31 +58,48 @@ class VerbTrainerTest extends TestCase
         $this->userName = UserName::by('someUsername');
         $this->body = Json::encodeFromArray(VerbProvider::managedVerbToGoAsArray());
 
-        $this->authenticatedUserMock = $this->createMock(AuthenticatedUserInterface::class);
-        $this->authenticatedUserMock->expects($this->once())
+        $this->getVerbToTrainCommand = GetVerbToTrain::for($this->userName);
+        $this->saveTrainedVerbCommand = SaveTrainedVerb::for($this->userName, $this->id);
+
+        $this->trainingVerbStub = $this->createStub(TrainingVerb::class);
+        $this->trainingVerbStub->method('asJson')
+            ->willReturn($this->body);
+    }
+
+
+    private function createAuthenticatedUserMock(): AuthenticatedUserInterface&MockObject
+    {
+        $mock = $this->createMock(AuthenticatedUserInterface::class);
+        $mock->expects($this->once())
             ->method('getUserName')
             ->willReturn($this->userName);
 
-        $this->getVerbToTrainHandler = $this->createMock(VerbToTrainProvider::class);
-        $this->getVerbToTrainCommand = GetVerbToTrain::for($this->userName);
+        return $mock;
+    }
 
-        $this->saveTrainedVerbHandler = $this->createMock(VerbProgressUpdater::class);
-        $this->saveTrainedVerbCommand = SaveTrainedVerb::for($this->userName, $this->id);
 
-        $this->trainingVerbMock = $this->createMock(TrainingVerb::class);
-        $this->trainingVerbMock->method('asJson')
-            ->willReturn($this->body);
+    private function createTrainer(
+        VerbToTrainProvider $verbToTrainProvider,
+        VerbProgressUpdater $verbProgressUpdater,
+    ): VerbTrainer {
+        return new VerbTrainer(
+            $this->loggerMock,
+            $verbToTrainProvider,
+            $verbProgressUpdater,
+            $this->url
+        );
     }
 
 
     public function testCanGetVerbToTrain(): void
     {
+        $getVerbToTrainMock = $this->createMock(VerbToTrainProvider::class);
         $expectedResponse = VocabularyToTrainResponse::create($this->url, $this->body);
 
-        $this->getVerbToTrainHandler->expects($this->once())
+        $getVerbToTrainMock->expects($this->once())
             ->method('handle')
             ->with($this->getVerbToTrainCommand)
-            ->willReturn($this->trainingVerbMock);
+            ->willReturn($this->trainingVerbStub);
 
         $this->loggerMock->expects($this->once())
             ->method('info')
@@ -101,14 +112,8 @@ class VerbTrainerTest extends TestCase
                 )
             );
 
-        $trainer = new VerbTrainer(
-            $this->loggerMock,
-            $this->getVerbToTrainHandler,
-            $this->saveTrainedVerbHandler,
-            $this->url
-        );
-
-        $response = $trainer->getVerbToTrain($this->authenticatedUserMock);
+        $trainer = $this->createTrainer($getVerbToTrainMock, $this->createStub(VerbProgressUpdater::class));
+        $response = $trainer->getVerbToTrain($this->createAuthenticatedUserMock());
         $this->assertions($expectedResponse, $response);
     }
 
@@ -124,10 +129,11 @@ class VerbTrainerTest extends TestCase
 
     public function testThrowsExceptionOnErrorWhileTryingToGetWordToTrain(): void
     {
+        $getVerbToTrainMock = $this->createMock(VerbToTrainProvider::class);
         $throwable = new RuntimeException('ooops');
         $expectedResponse = ErrorResponse::serverError($this->url, $throwable);
 
-        $this->getVerbToTrainHandler->expects($this->once())
+        $getVerbToTrainMock->expects($this->once())
             ->method('handle')
             ->with($this->getVerbToTrainCommand)
             ->willThrowException($throwable);
@@ -138,25 +144,20 @@ class VerbTrainerTest extends TestCase
             ->method('error')
             ->with($throwable);
 
-        $trainer = new VerbTrainer(
-            $this->loggerMock,
-            $this->getVerbToTrainHandler,
-            $this->saveTrainedVerbHandler,
-            $this->url
-        );
-
-        $response = $trainer->getVerbToTrain($this->authenticatedUserMock);
+        $trainer = $this->createTrainer($getVerbToTrainMock, $this->createStub(VerbProgressUpdater::class));
+        $response = $trainer->getVerbToTrain($this->createAuthenticatedUserMock());
         $this->assertions($expectedResponse, $response);
     }
 
 
     public function testCanSaveSuccess(): void
     {
+        $saveTrainedVerbMock = $this->createMock(VerbProgressUpdater::class);
         $expectedResponse = NoContentResponse::vocabularyTrainedSuccessfully($this->url);
 
         $request = $this->getRequest();
 
-        $this->saveTrainedVerbHandler->expects($this->once())
+        $saveTrainedVerbMock->expects($this->once())
             ->method('handle')
             ->with($this->saveTrainedVerbCommand);
 
@@ -169,14 +170,8 @@ class VerbTrainerTest extends TestCase
                 )
             );
 
-        $trainer = new VerbTrainer(
-            $this->loggerMock,
-            $this->getVerbToTrainHandler,
-            $this->saveTrainedVerbHandler,
-            $this->url
-        );
-
-        $response = $trainer->saveSuccess($this->authenticatedUserMock,$request);
+        $trainer = $this->createTrainer($this->createStub(VerbToTrainProvider::class), $saveTrainedVerbMock);
+        $response = $trainer->saveSuccess($this->createAuthenticatedUserMock(), $request);
         $this->assertions($expectedResponse, $response);
     }
 
@@ -196,12 +191,13 @@ class VerbTrainerTest extends TestCase
 
     public function testReturnsErrorResponseOnMissingParameterWhileTryingToGetWordToTrain(): void
     {
+        $saveTrainedVerbMock = $this->createMock(VerbProgressUpdater::class);
         $throwable = new RuntimeException('ooops', ResponseCode::badRequest->value);
         $expectedResponse = ErrorResponse::badRequest($this->url, $throwable);
 
         $request = $this->getRequest();
 
-        $this->saveTrainedVerbHandler->expects($this->once())
+        $saveTrainedVerbMock->expects($this->once())
             ->method('handle')
             ->with($this->saveTrainedVerbCommand)
             ->willThrowException($throwable);
@@ -212,26 +208,21 @@ class VerbTrainerTest extends TestCase
             ->method('error')
             ->with($throwable);
 
-        $trainer = new VerbTrainer(
-            $this->loggerMock,
-            $this->getVerbToTrainHandler,
-            $this->saveTrainedVerbHandler,
-            $this->url
-        );
-
-        $response = $trainer->saveSuccess($this->authenticatedUserMock,$request);
+        $trainer = $this->createTrainer($this->createStub(VerbToTrainProvider::class), $saveTrainedVerbMock);
+        $response = $trainer->saveSuccess($this->createAuthenticatedUserMock(), $request);
         $this->assertions($expectedResponse, $response);
     }
 
 
     public function testReturnsErrorResponseIfWordIsNotFoundWhileTryingToGetWordToTrain(): void
     {
+        $saveTrainedVerbMock = $this->createMock(VerbProgressUpdater::class);
         $throwable = new RuntimeException('ooops', ResponseCode::notFound->value);
         $expectedResponse = ErrorResponse::notFound($this->url, $throwable);
 
         $request = $this->getRequest();
 
-        $this->saveTrainedVerbHandler->expects($this->once())
+        $saveTrainedVerbMock->expects($this->once())
             ->method('handle')
             ->with($this->saveTrainedVerbCommand)
             ->willThrowException($throwable);
@@ -242,26 +233,21 @@ class VerbTrainerTest extends TestCase
             ->method('error')
             ->with($throwable);
 
-        $trainer = new VerbTrainer(
-            $this->loggerMock,
-            $this->getVerbToTrainHandler,
-            $this->saveTrainedVerbHandler,
-            $this->url
-        );
-
-        $response = $trainer->saveSuccess($this->authenticatedUserMock,$request);
+        $trainer = $this->createTrainer($this->createStub(VerbToTrainProvider::class), $saveTrainedVerbMock);
+        $response = $trainer->saveSuccess($this->createAuthenticatedUserMock(), $request);
         $this->assertions($expectedResponse, $response);
     }
 
 
     public function testReturnsErrorResponseOnAnyOtherErrorWhileTryingToGetWordToTrain(): void
     {
+        $saveTrainedVerbMock = $this->createMock(VerbProgressUpdater::class);
         $throwable = new RuntimeException('ooops', ResponseCode::serverError->value);
         $expectedResponse = ErrorResponse::serverError($this->url, $throwable);
 
         $request = $this->getRequest();
 
-        $this->saveTrainedVerbHandler->expects($this->once())
+        $saveTrainedVerbMock->expects($this->once())
             ->method('handle')
             ->with($this->saveTrainedVerbCommand)
             ->willThrowException($throwable);
@@ -272,14 +258,8 @@ class VerbTrainerTest extends TestCase
             ->method('error')
             ->with($throwable);
 
-        $trainer = new VerbTrainer(
-            $this->loggerMock,
-            $this->getVerbToTrainHandler,
-            $this->saveTrainedVerbHandler,
-            $this->url
-        );
-
-        $response = $trainer->saveSuccess($this->authenticatedUserMock,$request);
+        $trainer = $this->createTrainer($this->createStub(VerbToTrainProvider::class), $saveTrainedVerbMock);
+        $response = $trainer->saveSuccess($this->createAuthenticatedUserMock(), $request);
         $this->assertions($expectedResponse, $response);
     }
 }

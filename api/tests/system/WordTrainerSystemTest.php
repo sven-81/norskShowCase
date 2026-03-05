@@ -276,8 +276,10 @@ class WordTrainerSystemTest extends TestCase
 
     protected function tearDown(): void
     {
-        if ($this->name() === 'testCanThrowServerErrorExceptionWhileSavingSuccess'
-            || $this->name() === 'testCanThrowServerErrorExceptionWhileGettingWords') {
+        if (
+            $this->name() === 'testCanThrowServerErrorExceptionWhileSavingSuccess'
+            || $this->name() === 'testCanThrowServerErrorExceptionWhileGettingWords'
+        ) {
             $this->integrationDatabase->recreate(TableName::wordsSuccessCounterToUsers);
         }
 

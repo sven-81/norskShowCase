@@ -14,7 +14,6 @@ use PHPUnit\Framework\TestCase;
 #[CoversClass(UpdateVerb::class)]
 class UpdateVerbTest extends TestCase
 {
-
     private Id $id;
 
     private UpdateVerb $command;
@@ -25,12 +24,12 @@ class UpdateVerbTest extends TestCase
     protected function setUp(): void
     {
         $this->verb = VerbProvider::managedVerbToGo();
-        $payloadMock = $this->createMock(Payload::class);
-        $payloadMock->method('asArray')
+        $payloadStub = $this->createStub(Payload::class);
+        $payloadStub->method('asArray')
             ->willReturn($this->verb->asJson()->asDecodedJson());
 
         $this->id = Id::by(123);
-        $this->command = UpdateVerb::createBy($this->id, $payloadMock);
+        $this->command = UpdateVerb::createBy($this->id, $payloadStub);
     }
 
 

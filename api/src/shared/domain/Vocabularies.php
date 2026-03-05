@@ -6,20 +6,16 @@ namespace norsk\api\shared\domain;
 
 use ArrayIterator;
 use IteratorAggregate;
-use LogicException;
-use norsk\api\manager\domain\verbs\ManagedVerb;
-use norsk\api\manager\domain\words\ManagedWord;
 use norsk\api\shared\application\Json;
-use norsk\api\trainer\domain\verbs\TrainingVerb;
-use norsk\api\trainer\domain\words\TrainingWord;
 use OutOfBoundsException;
 
 class Vocabularies implements IteratorAggregate
 {
+    /** @var TrainingVocabulary[] */
     private array $vocabularies;
 
 
-    private function __construct(TrainingWord|ManagedWord|TrainingVerb|ManagedVerb ...$vocabulary)
+    private function __construct(TrainingVocabulary ...$vocabulary)
     {
         $this->vocabularies = $vocabulary;
     }
@@ -31,7 +27,7 @@ class Vocabularies implements IteratorAggregate
     }
 
 
-    public function add(Vocabulary $vocabulary): void
+    public function add(TrainingVocabulary $vocabulary): void
     {
         $this->vocabularies[] = $vocabulary;
     }
@@ -43,33 +39,17 @@ class Vocabularies implements IteratorAggregate
     }
 
 
-    public function pick(Id $pickedVocabularyId): TrainingWord|TrainingVerb
+    public function pick(Id $pickedVocabularyId): TrainingVocabulary
     {
-        $type = null;
         foreach ($this->vocabularies as $vocabulary) {
-            $type = $this->getType($vocabulary);
             if ($vocabulary->getId()->asInt() === $pickedVocabularyId->asInt()) {
                 return $vocabulary;
             }
         }
 
         throw new OutOfBoundsException(
-            'No ' . $type . ' can be mapped with chosen id: ' . $pickedVocabularyId->asInt()
+            'No vocabulary found for id: ' . $pickedVocabularyId->asInt()
         );
-    }
-
-
-    private function getType(TrainingVocabulary $vocabulary): string
-    {
-        if ($vocabulary instanceof TrainingWord) {
-            return ucfirst(VocabularyType::word->value);
-        }
-
-        if ($vocabulary instanceof TrainingVerb) {
-            return ucfirst(VocabularyType::verb->value);
-        }
-
-        throw new LogicException('Vocabulary type has to be TrainingWord or TrainingVerb');
     }
 
 

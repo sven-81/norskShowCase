@@ -11,14 +11,14 @@ use norsk\api\infrastructure\routing\CorsMiddleware;
 use norsk\api\infrastructure\routing\Router;
 use Slim\App;
 
-class NorskApi
+readonly class NorskApi
 {
     public function __construct(
-        private readonly Logger $logger,
-        private readonly Router $router,
-        private readonly App $app,
-        private readonly CorsMiddleware $corsMiddleware,
-        private readonly AppLoggerConfig $appLoggerConfig,
+        private Logger $logger,
+        private Router $router,
+        private App $app,
+        private CorsMiddleware $corsMiddleware,
+        private AppLoggerConfig $appLoggerConfig,
     ) {
     }
 

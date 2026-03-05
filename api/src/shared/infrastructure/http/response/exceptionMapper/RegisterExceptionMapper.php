@@ -21,7 +21,6 @@ class RegisterExceptionMapper
     {
         $code = $throwable->getCode();
 
-
         return match (true) {
             $code === ResponseCode::badRequest->value
             => self::parameterMissingResponse($url, $throwable),

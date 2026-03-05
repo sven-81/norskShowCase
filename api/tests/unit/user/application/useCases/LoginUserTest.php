@@ -15,7 +15,6 @@ use PHPUnit\Framework\TestCase;
 #[CoversClass(LoginUser::class)]
 class LoginUserTest extends TestCase
 {
-
     private LoginUser $user;
 
     private InputPassword $password;
@@ -28,7 +27,7 @@ class LoginUserTest extends TestCase
         $this->userName = UserName::by('smurf');
         $this->password = InputPassword::by('shhhhhhhhhhhhhhhhhhhhhhhhhh!!');
 
-        $payload = $this->createMock(Payload::class);
+        $payload = $this->createStub(Payload::class);
         $payload->method('asArray')
             ->willReturn(
                 [
@@ -53,9 +52,9 @@ class LoginUserTest extends TestCase
 
 
     #[DataProvider('missingFieldProvider')]
-    public function testThrowsExceptionIfFieldIsMissing(array $payloadArray
-    ): void {
-        $payload = $this->createMock(Payload::class);
+    public function testThrowsExceptionIfFieldIsMissing(array $payloadArray): void
+    {
+        $payload = $this->createStub(Payload::class);
         $payload->method('asArray')
             ->willReturn($payloadArray);
 
@@ -74,5 +73,4 @@ class LoginUserTest extends TestCase
             'empty password' => [['username' => 'smurf', 'password' => '',],],
         ];
     }
-
 }

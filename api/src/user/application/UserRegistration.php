@@ -9,11 +9,11 @@ use norsk\api\user\domain\model\RegisteredUser;
 use norsk\api\user\domain\port\UserWritingRepository;
 use norsk\api\user\domain\valueObjects\PasswordVector;
 
-class UserRegistration
+readonly class UserRegistration
 {
     public function __construct(
-        private readonly UserWritingRepository $userRepository,
-        private readonly PasswordVector $passwordVector,
+        private UserWritingRepository $userRepository,
+        private PasswordVector $passwordVector,
     ) {
     }
 

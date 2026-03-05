@@ -6,11 +6,10 @@ namespace norsk\api\shared\domain;
 
 use InvalidArgumentException;
 use norsk\api\shared\application\SanitizedClientInput;
-use norsk\api\shared\infrastructure\http\response\ResponseCode;
 
-class Norsk
+readonly class Norsk
 {
-    private function __construct(private readonly string $norsk)
+    private function __construct(private string $norsk)
     {
     }
 
@@ -27,7 +26,7 @@ class Norsk
     private static function ensureIsNotEmpty(string $string): void
     {
         if ($string === '') {
-            throw new InvalidArgumentException('Norsk cannot be empty.', ResponseCode::unprocessable->value);
+            throw new InvalidArgumentException('Norsk cannot be empty.', DomainExceptionCode::invalidInput->value);
         }
     }
 

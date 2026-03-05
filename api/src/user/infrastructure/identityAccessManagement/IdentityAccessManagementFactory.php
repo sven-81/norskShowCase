@@ -7,19 +7,20 @@ namespace norsk\api\user\infrastructure\identityAccessManagement;
 use norsk\api\infrastructure\config\AppConfig;
 use norsk\api\infrastructure\logging\Logger;
 use norsk\api\shared\infrastructure\http\response\Url;
+use norsk\api\user\domain\port\ManagerAuthorizationRepository;
+use norsk\api\user\domain\port\UserReadingRepository;
 use norsk\api\user\infrastructure\identityAccessManagement\authentication\Authentication;
 use norsk\api\user\infrastructure\identityAccessManagement\authorization\Authorization;
 use norsk\api\user\infrastructure\identityAccessManagement\authorization\ManagerAuthorizationStrategy;
 use norsk\api\user\infrastructure\identityAccessManagement\authorization\TrainerAuthorizationStrategy;
 use norsk\api\user\infrastructure\identityAccessManagement\jwt\JwtManagement;
-use norsk\api\user\infrastructure\persistence\UsersReader;
 
 readonly class IdentityAccessManagementFactory
 {
     public function __construct(
         private AppConfig $appConfig,
         private Logger $logger,
-        private UsersReader $usersReader,
+        private UserReadingRepository&ManagerAuthorizationRepository $usersReader,
         private Url $url
     ) {
     }

@@ -6,9 +6,9 @@ namespace norsk\api\user\infrastructure\identityAccessManagement\authentication;
 
 use InvalidArgumentException;
 
-class AuthenticationAlgorithm
+readonly class AuthenticationAlgorithm
 {
-    private function __construct(private readonly string $algorithm)
+    private function __construct(private string $algorithm)
     {
     }
 
@@ -25,7 +25,7 @@ class AuthenticationAlgorithm
     {
         $algorithmList = self::getAlgorithmList();
 
-        if (!in_array($algorithm, $algorithmList)) {
+        if (!in_array($algorithm, $algorithmList, true)) {
             throw new InvalidArgumentException('Algorithm has no valid format');
         }
     }

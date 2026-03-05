@@ -21,9 +21,9 @@ class TrainerFactoryTest extends TestCase
     protected function setUp(): void
     {
         $this->factory = new TrainerFactory(
-            $this->createMock(Logger::class),
-            $this->createMock(DbConnection::class),
-            $this->createMock(AppConfig::class)
+            $this->createStub(Logger::class),
+            $this->createStub(DbConnection::class),
+            $this->createStub(AppConfig::class)
         );
     }
 

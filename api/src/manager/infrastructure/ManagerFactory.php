@@ -23,12 +23,12 @@ use norsk\api\manager\infrastructure\web\controller\VerbManager;
 use norsk\api\manager\infrastructure\web\controller\WordManager;
 use norsk\api\shared\domain\VocabularyType;
 
-class ManagerFactory
+readonly class ManagerFactory
 {
     public function __construct(
-        private readonly Logger $logger,
-        private readonly DbConnection $dbConnection,
-        private readonly AppConfig $appConfig
+        private Logger $logger,
+        private DbConnection $dbConnection,
+        private AppConfig $appConfig
     ) {
     }
 

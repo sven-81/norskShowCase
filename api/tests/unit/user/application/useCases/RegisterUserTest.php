@@ -18,7 +18,6 @@ use PHPUnit\Framework\TestCase;
 #[CoversClass(RegisterUser::class)]
 class RegisterUserTest extends TestCase
 {
-
     private array $payload;
 
     private RegisterUser $registerUser;
@@ -45,11 +44,12 @@ class RegisterUserTest extends TestCase
             'lastName' => 'someLastName',
             'password' => 'someLoooongPassword',
         ];
-        $payloadMock = $this->createMock(Payload::class);
-        $payloadMock->method('asArray')
-            ->willReturn($this->payload);;
+        $payloadStub = $this->createStub(Payload::class);
+        $payloadStub->method('asArray')
+            ->willReturn($this->payload);
+        ;
 
-        $this->registerUser = RegisterUser::by($payloadMock);
+        $this->registerUser = RegisterUser::by($payloadStub);
     }
 
 
@@ -95,10 +95,10 @@ class RegisterUserTest extends TestCase
 
         unset($this->payload[$missingKey]);
 
-        $invalidPayloadMock = $this->createMock(Payload::class);
-        $invalidPayloadMock->method('asArray')
+        $invalidPayloadStub = $this->createStub(Payload::class);
+        $invalidPayloadStub->method('asArray')
             ->willReturn($this->payload);
 
-        $this->registerUser = RegisterUser::by($invalidPayloadMock);
+        $this->registerUser = RegisterUser::by($invalidPayloadStub);
     }
 }

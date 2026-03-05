@@ -7,9 +7,9 @@ namespace norsk\api\infrastructure\persistence;
 use InvalidArgumentException;
 use norsk\api\shared\infrastructure\http\response\ResponseCode;
 
-class User
+readonly class User
 {
-    private function __construct(private readonly string $user)
+    private function __construct(private string $user)
     {
     }
 

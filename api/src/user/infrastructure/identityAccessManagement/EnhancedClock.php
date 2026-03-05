@@ -7,9 +7,9 @@ namespace norsk\api\user\infrastructure\identityAccessManagement;
 use DateTimeImmutable;
 use Psr\Clock\ClockInterface;
 
-final class EnhancedClock implements ClockInterface
+final readonly class EnhancedClock implements ClockInterface
 {
-    public function __construct(private readonly ClockInterface $clock)
+    public function __construct(private ClockInterface $clock)
     {
     }
 

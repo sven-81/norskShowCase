@@ -10,39 +10,36 @@ use norsk\api\infrastructure\logging\LogMessage;
 use norsk\api\shared\infrastructure\http\response\UnauthorizedResponse;
 use norsk\api\shared\infrastructure\http\response\Url;
 use norsk\api\user\application\AuthenticatedUserInterface;
+use norsk\api\user\domain\model\AuthorizationResult;
 use norsk\api\user\domain\model\Role;
-use norsk\api\user\domain\service\AuthorizationStrategy;
+use norsk\api\user\domain\port\ManagerAuthorizationRepository;
 use norsk\api\user\domain\valueObjects\UserName;
-use norsk\api\user\infrastructure\persistence\UsersReader;
 
-class ManagerAuthorizationStrategy implements AuthorizationStrategy
+readonly class ManagerAuthorizationStrategy implements AuthorizationMiddlewareStrategy
 {
-
     public function __construct(
-        private readonly UsersReader $usersReader,
-        private readonly Url $url
+        private ManagerAuthorizationRepository $authorizationRepository,
+        private Url $url
     ) {
     }
 
 
-    public function authorize(AuthenticatedUserInterface $authenticatedUser): AuthorizationDecision
+    public function authorize(AuthenticatedUserInterface $authenticatedUser): AuthorizationResult
     {
-        $managerRole = $authenticatedUser->roleEquals(Role::MANAGER);
-        if ($managerRole) {
-            return AuthorizationDecision::by(
-                isAuthorized: true,
-                userName: $authenticatedUser->getUsername(),
-                role: $authenticatedUser->getRole()
+        if ($authenticatedUser->roleEquals(Role::MANAGER)) {
+            return AuthorizationResult::granted(
+                $authenticatedUser->getUserName(),
+                $authenticatedUser->getRole()
             );
         }
 
-        return AuthorizationDecision::by();
+        return AuthorizationResult::denied();
     }
 
 
     public function checkActive(AuthenticatedUserInterface $authenticatedUser): void
     {
-        $this->usersReader->isActiveManager($authenticatedUser->getUserName());
+        $this->authorizationRepository->isActiveManager($authenticatedUser->getUserName());
     }
 
 
@@ -52,42 +49,30 @@ class ManagerAuthorizationStrategy implements AuthorizationStrategy
     }
 
 
-    public function successLogging(AuthorizationDecision $authorizationDecision): LogMessage
+    public function successLogging(AuthorizationResult $result): LogMessage
     {
-        $userName = $this->getUserName($authorizationDecision);
+        $userName = $this->ensureUserNameIsDefined($result);
 
-        return LogMessage::fromString(
-            sprintf(
-                "Authorized %s: %s",
-                $authorizationDecision->getRole()->value,
-                $userName->asString()
-            )
-        );
+        return LogMessage::fromString(sprintf('Authorized %s: %s', $result->getRole()->value, $userName->asString()));
     }
 
 
-    private function getUserName(AuthorizationDecision $authorizationDecision): UserName
+    private function ensureUserNameIsDefined(AuthorizationResult $result): UserName
     {
-        if ($authorizationDecision->getUserName() === null) {
+        if ($result->getUserName() === null) {
             throw new InvalidArgumentException('UserName is not defined.');
         }
 
-        return $authorizationDecision->getUserName();
+        return $result->getUserName();
     }
 
 
     public function infoLogMessageForError(?UserName $userName): LogMessage
     {
-        return LogMessage::fromString($this->createLogMessage($userName));
-    }
-
-
-    private function createLogMessage(?UserName $userName): string
-    {
         if ($userName instanceof UserName) {
-            return 'Could not authenticate manager: ' . $userName->asString();
+            return LogMessage::fromString('Could not authenticate manager: ' . $userName->asString());
         }
 
-        return 'Could not authenticate manager without user name.';
+        return LogMessage::fromString('Could not authenticate manager without user name.');
     }
 }

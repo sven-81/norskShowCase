@@ -49,7 +49,8 @@ class NorskApiTest extends TestCase
         $appMock->expects($this->once())
             ->method('run');
 
-        $corsMiddlewareMock = $this->createMock(CorsMiddleware::class);;
+        $corsMiddlewareStub = $this->createStub(CorsMiddleware::class);
+        ;
 
         $appLoggerConfigMock = $this->createMock(AppLoggerConfig::class);
         $appLoggerConfigMock->expects($this->once())
@@ -59,7 +60,7 @@ class NorskApiTest extends TestCase
         $appLoggerConfigMock->expects($this->once())
             ->method('isLogErrorDetails');
 
-        $api = new NorskApi($loggerMock, $routerMock, $appMock, $corsMiddlewareMock, $appLoggerConfigMock);
+        $api = new NorskApi($loggerMock, $routerMock, $appMock, $corsMiddlewareStub, $appLoggerConfigMock);
         $api->run();
     }
 }

@@ -51,10 +51,11 @@ class DbConnection
         Parameters $params
     ): bool|mysqli_result {
         $this->createConnection();
-        $success = $this->mysqli->execute_query($sql->asString(), $params->asArray());
+        $sqlString = $sql->asString();
+        $success = $this->mysqli->execute_query($sqlString, $params->asArray());
 
         if (!$success) {
-            $this->throwExceptionCouldNotExecuteQuery($sql);
+            throw new RuntimeException('Could not execute query: ' . $sqlString);
         }
 
         return $success;
@@ -93,11 +94,6 @@ class DbConnection
         $this->mysqli->set_charset(self::CHARSET);
     }
 
-
-    private function throwExceptionCouldNotExecuteQuery(SqlStatement $sql): void
-    {
-        throw new RuntimeException('Could not execute query: ' . $sql->asString());
-    }
 
 
     private function ensureGetResultsWasImplementedCorrectly(mysqli_result|bool $results): void

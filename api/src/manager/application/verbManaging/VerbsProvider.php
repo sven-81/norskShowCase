@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace norsk\api\manager\application\verbManaging;
 
 use norsk\api\manager\application\verbManaging\useCases\GetAllVerbs;
-use norsk\api\shared\domain\Vocabularies;
+use norsk\api\manager\domain\ManagedVocabularies;
 use norsk\api\trainer\domain\verbs\ManagingVerbReadingRepository;
 
 readonly class VerbsProvider
@@ -16,7 +16,7 @@ readonly class VerbsProvider
     }
 
 
-    public function handle(GetAllVerbs $command): Vocabularies
+    public function handle(GetAllVerbs $command): ManagedVocabularies
     {
         return $this->verbReader->getAllVerbs();
     }

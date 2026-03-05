@@ -31,15 +31,15 @@ use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Throwable;
 
-class VerbManager implements ControllerInterface
+readonly class VerbManager implements ControllerInterface
 {
     public function __construct(
-        private readonly Logger $logger,
-        private readonly VerbsProvider $verbsProvider,
-        private readonly VerbCreator $verbCreator,
-        private readonly VerbUpdater $verbUpdater,
-        private readonly VerbRemover $verbRemover,
-        private readonly Url $url
+        private Logger $logger,
+        private VerbsProvider $verbsProvider,
+        private VerbCreator $verbCreator,
+        private VerbUpdater $verbUpdater,
+        private VerbRemover $verbRemover,
+        private Url $url
     ) {
     }
 

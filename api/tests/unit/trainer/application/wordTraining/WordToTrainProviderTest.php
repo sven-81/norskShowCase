@@ -16,7 +16,6 @@ use PHPUnit\Framework\TestCase;
 #[CoversClass(WordToTrainProvider::class)]
 class WordToTrainProviderTest extends TestCase
 {
-
     public function testCanHandleCommand(): void
     {
         $userName = UserName::by('someUser');

@@ -127,5 +127,4 @@ class JwtAuthenticatedUserTest extends TestCase
 
         JwtAuthenticatedUser::byRequest($request);
     }
-
 }

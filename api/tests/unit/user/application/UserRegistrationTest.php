@@ -18,7 +18,6 @@ use PHPUnit\Framework\TestCase;
 #[CoversClass(UserRegistration::class)]
 class UserRegistrationTest extends TestCase
 {
-
     public function testCanHandleCommand(): void
     {
         $userName = UserName::by('someUserName');
@@ -33,11 +32,11 @@ class UserRegistrationTest extends TestCase
             'password' => 'someLoooongPassword',
         ];
 
-        $payloadMock = $this->createMock(Payload::class);
-        $payloadMock->method('asArray')
+        $payloadStub = $this->createStub(Payload::class);
+        $payloadStub->method('asArray')
             ->willReturn($payload);
 
-        $passwordVectorMock = $this->createMock(PasswordVector::class);
+        $passwordVectorStub = $this->createStub(PasswordVector::class);
 
         $commandMock = $this->createMock(RegisterUser::class);
         $commandMock->expects($this->once())
@@ -57,7 +56,7 @@ class UserRegistrationTest extends TestCase
         $repositoryMock->expects($this->once())
             ->method('add');
 
-        $handler = new UserRegistration($repositoryMock, $passwordVectorMock);
+        $handler = new UserRegistration($repositoryMock, $passwordVectorStub);
         $handler->handle($commandMock);
     }
 }

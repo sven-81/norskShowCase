@@ -93,8 +93,8 @@ Deploy to webspace:
 - make jsbuild
 - deploy client to server => client/dist
 - deploy api to server
-  - run `composer-install --no-dev`
-  - move/rename configs without prd
+    - run `composer-install --no-dev`
+    - move/rename configs without prd
 
 ---
 

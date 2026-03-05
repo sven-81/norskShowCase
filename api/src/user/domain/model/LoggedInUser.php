@@ -6,19 +6,18 @@ namespace norsk\api\user\domain\model;
 
 use norsk\api\shared\application\Json;
 use norsk\api\user\domain\valueObjects\UserName;
-use norsk\api\user\infrastructure\identityAccessManagement\jwt\JsonWebToken;
 
 readonly class LoggedInUser
 {
     private const int TWO_HOURS_IN_SECONDS = 7200;
 
 
-    private function __construct(private ValidatedUser $validatedUser, private JsonWebToken $jwToken)
+    private function __construct(private ValidatedUser $validatedUser, private AuthToken $jwToken)
     {
     }
 
 
-    public static function by(ValidatedUser $validatedUser, JsonWebToken $jwToken): self
+    public static function by(ValidatedUser $validatedUser, AuthToken $jwToken): self
     {
         return new self($validatedUser, $jwToken);
     }
@@ -42,6 +41,6 @@ readonly class LoggedInUser
 
     public function getUserName(): UserName
     {
-        return $this->validatedUser->getUsername();
+        return $this->validatedUser->getUserName();
     }
 }

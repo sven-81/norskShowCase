@@ -7,9 +7,8 @@ namespace norsk\api\manager\infrastructure\persistence;
 use norsk\api\infrastructure\persistence\DbConnection;
 use norsk\api\infrastructure\persistence\Parameters;
 use norsk\api\infrastructure\persistence\SqlResult;
+use norsk\api\manager\domain\ManagedVocabularies;
 use norsk\api\manager\infrastructure\persistence\queries\words\GetAllWordsSql;
-use norsk\api\shared\domain\Vocabularies;
-use norsk\api\shared\infrastructure\http\response\ResponseCode;
 use norsk\api\tests\provider\WordProvider;
 use norsk\api\trainer\domain\exceptions\NoRecordInDatabaseException;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -31,13 +30,13 @@ class WordReaderTest extends TestCase
     public function testCanGetAllWords(): void
     {
         $word = WordProvider::managedWordArchipelago();
-        $expectedWords = Vocabularies::create();
+        $expectedWords = ManagedVocabularies::create();
         $expectedWords->add($word);
 
         $array = WordProvider::managedWordArchipelagoAsArray();
-        $result = SqlResult::resultFromArray([$array,]);
-
+        $result = SqlResult::resultFromArray([$array]);
         $getAllWordsSql = GetAllWordsSql::create();
+
         $this->dbConnector->expects($this->once())
             ->method('getResult')
             ->with(
@@ -47,6 +46,7 @@ class WordReaderTest extends TestCase
             ->willReturn($result);
 
         $wordReader = new WordReader($this->dbConnector);
+
         self::assertEquals($expectedWords, $wordReader->getAllWords());
     }
 
@@ -54,14 +54,12 @@ class WordReaderTest extends TestCase
     public function testThrowsExceptionIfNoRecordsAreFoundWhileTryingToGetAllWords(): void
     {
         $this->expectExceptionObject(
-            new NoRecordInDatabaseException(
-                'No records found in database for: words',
-                ResponseCode::serverError->value
-            )
+            new NoRecordInDatabaseException('No records found in database for: words')
         );
 
         $result = SqlResult::resultFromArray([]);
         $getAllWordsSql = GetAllWordsSql::create();
+
         $this->dbConnector->expects($this->once())
             ->method('getResult')
             ->with(
@@ -73,5 +71,4 @@ class WordReaderTest extends TestCase
         $wordReader = new WordReader($this->dbConnector);
         $wordReader->getAllWords();
     }
-
 }

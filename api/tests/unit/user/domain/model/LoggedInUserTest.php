@@ -24,7 +24,7 @@ class LoggedInUserTest extends TestCase
 
     public function testCanGetUserName(): void
     {
-        self::assertSame($this->userName, $this->loggedInUser->getUsername());
+        self::assertSame($this->userName, $this->loggedInUser->getUserName());
     }
 
 
@@ -47,22 +47,22 @@ class LoggedInUserTest extends TestCase
 
     protected function setUp(): void
     {
-        $validatedUserMock = $this->createMock(ValidatedUser::class);
+        $validatedUserStub = $this->createStub(ValidatedUser::class);
         $this->userName = UserName::by('testuser');
-        $validatedUserMock->method('getUsername')
+        $validatedUserStub->method('getUserName')
             ->willReturn($this->userName);
-        $validatedUserMock->method('getFirstName')
+        $validatedUserStub->method('getFirstName')
             ->willReturn(FirstName::by('Karl'));
-        $validatedUserMock->method('getLastName')
+        $validatedUserStub->method('getLastName')
             ->willReturn(LastName::by('Kopf'));
 
-        $jwTokenMock = $this->createMock(JsonWebToken::class);
-        $jwTokenMock->method('asString')
+        $jwTokenStub = $this->createStub(JsonWebToken::class);
+        $jwTokenStub->method('asString')
             ->willReturn('fakeToken');
 
         $this->loggedInUser = LoggedInUser::by(
-            $validatedUserMock,
-            $jwTokenMock
+            $validatedUserStub,
+            $jwTokenStub
         );
     }
 }

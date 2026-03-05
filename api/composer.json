@@ -1,5 +1,6 @@
 {
   "name": "duge/norsk",
+  "version": "2.0.0",
   "description": "Application to learn norsk.",
   "authors": [
     {
@@ -33,38 +34,39 @@
     }
   },
   "require": {
-    "php": ">=8.3",
+    "php": ">=8.5",
     "ext-mysqli": "*",
     "ext-mbstring": "*",
     "ext-json": "*",
-    "psr/clock": "*",
-    "slim/slim": "*",
-    "composer/installers": "*",
-    "components/jquery": "*",
-    "firebase/php-jwt": "*",
-    "guzzlehttp/guzzle": "*",
-    "katzgrau/klogger": "*"
+    "psr/clock": "^1.0.0",
+    "slim/slim": "^4.15.1",
+    "composer/installers": "^v2.3.0",
+    "firebase/php-jwt": "^v7.0.2",
+    "guzzlehttp/guzzle": "^7.10.0",
+    "monolog/monolog": "^3.10.0"
   },
   "require-dev": {
-    "roave/security-advisories": "dev-latest",
-    "phpunit/phpunit": "*",
-    "phpstan/phpstan": "*",
-    "phpstan/phpstan-phpunit": "*",
-    "povils/phpmnd": "*",
-    "behat/behat": "*",
     "ext-xdebug": "*",
+    "roave/security-advisories": "dev-latest",
+    "phpunit/phpunit": "^13",
+    "phpstan/phpstan": "^2.1.39",
+    "phpstan/phpstan-strict-rules": "^2.0.10",
+    "phpstan/phpstan-phpunit": "^2.0",
+    "phpstan/extension-installer": "^1.4",
+    "behat/behat": "^v3.29.0",
     "phpmetrics/phpmetrics": "v3.0.0rc6",
-    "squizlabs/php_codesniffer": "*",
-    "rector/rector": "*",
-    "infection/infection": "*",
-    "ebln/guzzle-openapi-middleware": "*",
-    "phparkitect/phparkitect": "*",
-    "deptrac/deptrac": "*"
+    "squizlabs/php_codesniffer": "^4.0.1",
+    "infection/infection": "^0.32.5",
+    "phparkitect/phparkitect": "^0.8.0",
+    "deptrac/deptrac": "^4.6.0",
+    "league/openapi-psr7-validator": "*"
   },
   "config": {
     "allow-plugins": {
       "composer/installers": true,
-      "infection/extension-installer": true
+      "infection/extension-installer": true,
+      "phpstan/extension-installer": true,
+      "dealerdirect/phpcodesniffer-composer-installer": true
     }
   }
 }

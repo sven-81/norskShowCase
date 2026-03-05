@@ -60,6 +60,20 @@ class JsonTest extends TestCase
     }
 
 
+    public function testThrowsExceptionIfStdClassIsInvalidForEncoding(): void
+    {
+        $this->expectExceptionObject(
+            new InvalidJsonArgumentException(
+                'Could not encode to json from stdClass'
+            )
+        );
+
+        $object = new stdClass();
+        $object->key = mb_convert_encoding('äöü', 'ISO-8859-1', 'UTF-8');
+        Json::encodeFromStdClass($object);
+    }
+
+
     public function testCanGetEscapedJsonInJsonString(): void
     {
         $object = new stdClass();

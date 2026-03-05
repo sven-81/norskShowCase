@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace norsk\api\shared\infrastructure\http\response;
 
-class ResponseHeaders
+readonly class ResponseHeaders
 {
-    private readonly array $headers;
+    private array $headers;
 
 
-    private function __construct(private readonly Url $url)
+    private function __construct(private Url $url)
     {
         $this->headers = [
             'Access-Control-Allow-Origin' => $this->url->asString(),

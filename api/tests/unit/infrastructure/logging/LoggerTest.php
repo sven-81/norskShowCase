@@ -8,8 +8,6 @@ use InvalidArgumentException;
 use norsk\api\helperTools\DirectoryCleaner;
 use norsk\api\infrastructure\config\File;
 use norsk\api\infrastructure\config\Path;
-use norsk\api\infrastructure\logging\Logger;
-use norsk\api\infrastructure\logging\LogMessage;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 

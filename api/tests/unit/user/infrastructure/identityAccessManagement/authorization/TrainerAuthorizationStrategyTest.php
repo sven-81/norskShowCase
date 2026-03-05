@@ -9,38 +9,31 @@ use norsk\api\infrastructure\logging\LogMessage;
 use norsk\api\shared\infrastructure\http\response\UnauthorizedResponse;
 use norsk\api\shared\infrastructure\http\response\Url;
 use norsk\api\user\application\AuthenticatedUserInterface;
+use norsk\api\user\domain\model\AuthorizationResult;
 use norsk\api\user\domain\model\Role;
+use norsk\api\user\domain\port\UserReadingRepository;
 use norsk\api\user\domain\valueObjects\UserName;
-use norsk\api\user\infrastructure\persistence\UsersReader;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
-use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 
 #[CoversClass(TrainerAuthorizationStrategy::class)]
 class TrainerAuthorizationStrategyTest extends TestCase
 {
-    private UsersReader|MockObject $usersReaderMock;
-
     private TrainerAuthorizationStrategy $trainerAuthorization;
 
     private UserName $userName;
-
-    private AuthenticatedUserInterface|MockObject $authenticatedUserMock;
 
     private Url $url;
 
 
     protected function setUp(): void
     {
-        $this->usersReaderMock = $this->createMock(UsersReader::class);
-
         $this->userName = UserName::by('someUserName');
-        $this->authenticatedUserMock = $this->createMock(AuthenticatedUserInterface::class);
         $this->url = Url::by('http://foo');
 
         $this->trainerAuthorization = new TrainerAuthorizationStrategy(
-            $this->usersReaderMock,
+            $this->createStub(UserReadingRepository::class),
             $this->url
         );
     }
@@ -55,49 +48,47 @@ class TrainerAuthorizationStrategyTest extends TestCase
     }
 
 
-    public function testAutorizeReturnsEmptyDecisionIf(): void
+    public function testAuthorizeReturnsDeniedIfRoleIsUnknown(): void
     {
         self::assertEquals(
-            AuthorizationDecision::by(),
-            $this->trainerAuthorization->authorize($this->authenticatedUserMock)
+            AuthorizationResult::denied(),
+            $this->trainerAuthorization->authorize($this->createStub(AuthenticatedUserInterface::class))
         );
     }
 
 
     #[DataProvider('getRole')]
-    public function testAutorizeReturnsValidDecision(Role $role): void
+    public function testAuthorizeReturnsGrantedForAllowedRole(Role $role): void
     {
-        $this->authenticatedUserMock
+        $authenticatedUserStub = $this->createStub(AuthenticatedUserInterface::class);
+        $authenticatedUserStub
             ->method('roleEquals')
             ->willReturnCallback(fn($passedRole): bool => $passedRole === $role);
-        $this->authenticatedUserMock
-            ->expects($this->once())
-            ->method('getUserName')
-            ->willReturn($this->userName);
-        $this->authenticatedUserMock
-            ->expects($this->once())
-            ->method('getRole')
-            ->willReturn($role);
+        $authenticatedUserStub->method('getUserName')->willReturn($this->userName);
+        $authenticatedUserStub->method('getRole')->willReturn($role);
 
         self::assertEquals(
-            AuthorizationDecision::by(true, $this->userName, $role),
-            $this->trainerAuthorization->authorize($this->authenticatedUserMock)
+            AuthorizationResult::granted($this->userName, $role),
+            $this->trainerAuthorization->authorize($authenticatedUserStub)
         );
     }
 
 
     public function testCanCheckActive(): void
     {
-        $this->authenticatedUserMock
-            ->expects($this->once())
+        $repoMock = $this->createMock(UserReadingRepository::class);
+        $authenticatedUserMock = $this->createMock(AuthenticatedUserInterface::class);
+
+        $authenticatedUserMock->expects($this->once())
             ->method('getUserName')
             ->willReturn($this->userName);
 
-        $this->usersReaderMock->expects($this->once())
+        $repoMock->expects($this->once())
             ->method('checkIfUserExists')
             ->with($this->userName);
 
-        $this->trainerAuthorization->checkActive($this->authenticatedUserMock);
+        $strategy = new TrainerAuthorizationStrategy($repoMock, $this->url);
+        $strategy->checkActive($authenticatedUserMock);
     }
 
 
@@ -112,35 +103,24 @@ class TrainerAuthorizationStrategyTest extends TestCase
 
     public function testCanGetLogMessageForSuccess(): void
     {
+        $result = AuthorizationResult::granted($this->userName, Role::MANAGER);
+
         self::assertEquals(
-            LogMessage::fromString("Authorized manager: someUserName"),
-            $this->trainerAuthorization->successLogging(
-                AuthorizationDecision::by(
-                    isAuthorized: true,
-                    userName: $this->userName,
-                    role: Role::MANAGER
-                )
-            )
+            LogMessage::fromString('Authorized manager: someUserName'),
+            $this->trainerAuthorization->successLogging($result)
         );
     }
 
 
-    public function testThrowsExceptionIfUserNameIsUnknownForSuccessLogging(): void
+    public function testSuccessLoggingThrowsExceptionIfUserNameIsNull(): void
     {
-        $this->expectExceptionObject(
-            new InvalidArgumentException('UserName is not defined.')
-        );
+        $this->expectExceptionObject(new InvalidArgumentException('UserName is not defined.'));
 
-        $this->trainerAuthorization->successLogging(
-            AuthorizationDecision::by(
-                isAuthorized: true,
-                role: Role::MANAGER
-            )
-        );
+        $this->trainerAuthorization->successLogging(AuthorizationResult::denied());
     }
 
 
-    public function testCanGetLogMassageIfUserNameExists(): void
+    public function testCanGetLogMessageIfUserNameExists(): void
     {
         self::assertEquals(
             LogMessage::fromString('Could not authenticate user for training: ' . $this->userName->asString()),
@@ -149,7 +129,7 @@ class TrainerAuthorizationStrategyTest extends TestCase
     }
 
 
-    public function testCanGetLogMassageIfUserNameDoesNotExist(): void
+    public function testCanGetLogMessageIfUserNameDoesNotExist(): void
     {
         self::assertEquals(
             LogMessage::fromString('Could not authenticate user for training without user name.'),

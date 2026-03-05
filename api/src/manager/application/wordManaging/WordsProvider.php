@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace norsk\api\manager\application\wordManaging;
 
 use norsk\api\manager\application\wordManaging\useCases\GetAllWords;
-use norsk\api\shared\domain\Vocabularies;
+use norsk\api\manager\domain\ManagedVocabularies;
 use norsk\api\trainer\domain\words\ManagingWordReadingRepository;
 
 readonly class WordsProvider
@@ -16,7 +16,7 @@ readonly class WordsProvider
     }
 
 
-    public function handle(GetAllWords $command): Vocabularies
+    public function handle(GetAllWords $command): ManagedVocabularies
     {
         return $this->wordReader->getAllWords();
     }

@@ -279,8 +279,10 @@ class VerbTrainerSystemTest extends TestCase
 
     protected function tearDown(): void
     {
-        if ($this->name() === 'testCanThrowServerErrorExceptionWhileSavingSuccess'
-            || $this->name() === 'testCanThrowServerErrorExceptionWhileGettingVerbs') {
+        if (
+            $this->name() === 'testCanThrowServerErrorExceptionWhileSavingSuccess'
+            || $this->name() === 'testCanThrowServerErrorExceptionWhileGettingVerbs'
+        ) {
             $this->integrationDatabase->recreate(TableName::verbsSuccessCounterToUsers);
         }
 

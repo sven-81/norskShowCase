@@ -8,7 +8,6 @@ use InvalidArgumentException;
 
 readonly class Method
 {
-
     private function __construct(private string $method)
     {
     }
@@ -24,7 +23,7 @@ readonly class Method
 
     private static function ensureIsNotEmpty(string $string): void
     {
-        if (empty($string)) {
+        if ($string === '') {
             throw new InvalidArgumentException(message: 'Method cannot be empty.');
         }
     }

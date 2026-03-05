@@ -33,22 +33,36 @@ class Json
     public static function encodeFromArray(array $array): self
     {
         try {
-            return new self(json_encode($array, JSON_THROW_ON_ERROR));
+            $encoded = json_encode($array, JSON_THROW_ON_ERROR);
         } catch (JsonException) {
             throw new InvalidJsonArgumentException('Could not encode to json from array');
         }
+
+        // @codeCoverageIgnoreStart
+        if (!is_string($encoded)) {
+            throw new InvalidJsonArgumentException('Unexpected non-string result from json_encode for array');
+        }
+        // @codeCoverageIgnoreEnd
+
+        return new self($encoded);
     }
 
 
     public static function encodeFromStdClass(stdClass $class): self
     {
         try {
-            return new self((string)json_encode($class, JSON_THROW_ON_ERROR));
-            // @codeCoverageIgnoreStart
+            $encoded = json_encode($class, JSON_THROW_ON_ERROR);
         } catch (JsonException) {
             throw new InvalidJsonArgumentException('Could not encode to json from stdClass');
-            // @codeCoverageIgnoreEnd
         }
+
+        // @codeCoverageIgnoreStart
+        if (!is_string($encoded)) {
+            throw new InvalidJsonArgumentException('Unexpected non-string result from json_encode for stdClass');
+        }
+        // @codeCoverageIgnoreEnd
+
+        return new self($encoded);
     }
 
 
@@ -57,13 +71,19 @@ class Json
         try {
             $innerJson = $payload->asJson()->asString();
             $outerJson = json_encode($innerJson, JSON_THROW_ON_ERROR);
-
-            return new self($outerJson);
-            // @codeCoverageIgnoreStart
+        // @codeCoverageIgnoreStart
         } catch (JsonException) {
             throw new InvalidArgumentException('Could not encode to escaped json from payload array');
-            // @codeCoverageIgnoreEnd
         }
+        // @codeCoverageIgnoreEnd
+
+        // @codeCoverageIgnoreStart
+        if (!is_string($outerJson)) {
+            throw new InvalidArgumentException('Unexpected non-string result from json_encode for escaped payload');
+        }
+        // @codeCoverageIgnoreEnd
+
+        return new self($outerJson);
     }
 
 

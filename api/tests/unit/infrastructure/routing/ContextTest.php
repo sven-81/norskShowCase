@@ -22,11 +22,11 @@ class ContextTest extends TestCase
 
     protected function setUp(): void
     {
-        $loggerMock = $this->createMock(Logger::class);
-        $dbConnectionMock = $this->createMock(DbConnection::class);
-        $jwtManagementMock = $this->createMock(JwtManagement::class);
-        $appConfigMock = $this->createMock(AppConfig::class);
-        $this->context = new Context($loggerMock, $dbConnectionMock, $jwtManagementMock, $appConfigMock);
+        $loggerStub = $this->createStub(Logger::class);
+        $dbConnectionStub = $this->createStub(DbConnection::class);
+        $jwtManagementStub = $this->createStub(JwtManagement::class);
+        $appConfigStub = $this->createStub(AppConfig::class);
+        $this->context = new Context($loggerStub, $dbConnectionStub, $jwtManagementStub, $appConfigStub);
     }
 
 

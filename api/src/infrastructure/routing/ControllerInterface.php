@@ -6,5 +6,4 @@ namespace norsk\api\infrastructure\routing;
 
 interface ControllerInterface
 {
-
 }

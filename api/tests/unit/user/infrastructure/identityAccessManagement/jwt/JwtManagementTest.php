@@ -16,10 +16,10 @@ use norsk\api\user\domain\valueObjects\UserName;
 use norsk\api\user\infrastructure\identityAccessManagement\authentication\AuthenticationAlgorithm;
 use norsk\api\user\infrastructure\identityAccessManagement\authentication\AuthenticationKey;
 use norsk\api\user\infrastructure\identityAccessManagement\EnhancedClock;
-use norsk\api\user\infrastructure\persistence\UsersReader;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
 
@@ -28,36 +28,36 @@ class JwtManagementTest extends TestCase
 {
     private const string BASE_PATH = __DIR__ . '/../../resources/jwt/';
 
-    private MockObject|AppConfig $appConfigMock;
+    private AppConfig&Stub $appConfigStub;
 
     private MockObject|JwtConfig $jwtConfigMock;
 
-    private ValidatedUser|MockObject $validatedUserMock;
+    private ValidatedUser $validatedUserStub;
 
-    private Logger|MockObject $loggerMock;
+    private Logger&Stub $loggerStub;
 
-    private UsersReader|MockObject $usersReaderMock;
-
-    private MockObject|ServerRequest $requestMock;
+    private ServerRequest&Stub $requestStub;
 
     private EnhancedClock $presentClock;
 
 
     protected function setUp(): void
     {
-        $this->appConfigMock = $this->createMock(AppConfig::class);
+        $this->appConfigStub = $this->createStub(AppConfig::class);
         $this->jwtConfigMock = $this->createMock(JwtConfig::class);
-        $this->validatedUserMock = $this->createMock(ValidatedUser::class);
-        $this->loggerMock = $this->createMock(Logger::class);
-        $this->usersReaderMock = $this->createMock(UsersReader::class);
-        $this->requestMock = $this->createMock(ServerRequest::class);
+        $this->validatedUserStub = $this->createStub(ValidatedUser::class);
+        $this->loggerStub = $this->createStub(Logger::class);
+        $this->requestStub = $this->createStub(ServerRequest::class);
 
         $initialTime = new MutableTestClock();
         $initialTime->setTo('2024-09-27 19:41:52');
         $this->presentClock = new EnhancedClock($initialTime);
 
-        $this->validatedUserMock->method('getRole')
+        $this->validatedUserStub->method('getRole')
             ->willReturn(Role::USER);
+
+        $this->validatedUserStub->method('getUserName')
+            ->willReturn(UserName::by('testuser'));
     }
 
 
@@ -74,7 +74,7 @@ class JwtManagementTest extends TestCase
     {
         return [
             'someUser' => ['klaus', 'validUserTokenWithTime.jwt'],
-            'client' => ['norsk client', 'validClientTokenWithTime.jwt'],
+            'client-old' => ['norsk client-old', 'validClientTokenWithTime.jwt'],
         ];
     }
 
@@ -92,9 +92,9 @@ class JwtManagementTest extends TestCase
     {
         return [
             'TokenExpired' => ['invalidExpired.jwt', 'Token expired'],
-            'SignatureInvalid' => ['invalidSignature.jwt', 'Invalid token signature',],
-            'BeforeValid' => ['invalidNotValidYet.jwt', 'Token not valid yet',],
-            'GeneralInvalidToken' => ['invalid.jwt', 'Invalid token',],
+            'SignatureInvalid' => ['invalidSignature.jwt', 'Invalid token signature'],
+            'BeforeValid' => ['invalidNotValidYet.jwt', 'Token not valid yet'],
+            'GeneralInvalidToken' => ['invalidGeneral.jwt', 'Invalid token: Algorithm not supported'],
         ];
     }
 
@@ -119,7 +119,7 @@ class JwtManagementTest extends TestCase
         $this->jwtConfigMock->expects($this->exactly($key))
             ->method('getAuthKey')
             ->willReturn(
-                AuthenticationKey::by('ABCDEFGHIJKLMnopqrstuvwxyz0123456789')
+                AuthenticationKey::by('ABCDEFGHIJKLMnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz01')
             );
     }
 
@@ -132,16 +132,17 @@ class JwtManagementTest extends TestCase
 
         $this->configureJwtConfig(subject: 1, audience: 1, algorithm: 1, key: 1);
 
-        $this->appConfigMock->expects($this->once())
+        $appConfigMock = $this->createMock(AppConfig::class);
+        $appConfigMock->expects($this->once())
             ->method('getJwtConfig')
             ->willReturn($this->jwtConfigMock);
 
         $JwtManagement = new JwtManagement(
-            $this->appConfigMock,
+            $appConfigMock,
             $this->presentClock,
-            $this->loggerMock
+            $this->loggerStub
         );
-        $jsonWebToken = $JwtManagement->create($this->validatedUserMock);
+        $jsonWebToken = $JwtManagement->create($this->validatedUserStub);
 
         self::assertEquals($validToken, $jsonWebToken, 'Jwt should be created');
     }
@@ -151,32 +152,30 @@ class JwtManagementTest extends TestCase
     {
         $this->configureJwtConfig(subject: 1, audience: 1, algorithm: 2, key: 2);
 
-        $this->appConfigMock
+        $this->appConfigStub
             ->method('getJwtConfig')
             ->willReturn($this->jwtConfigMock);
 
         $initialTime = new MutableTestClock();
         $presentClock = new EnhancedClock($initialTime);
 
-        $this->validatedUserMock->method('getUserName')
-            ->willReturn(UserName::by('klaus'));
-
-        $this->loggerMock->expects($this->once())
+        $loggerMock = $this->createMock(Logger::class);
+        $loggerMock->expects($this->once())
             ->method('info')
             ->with(LogMessage::fromString('Jwt is valid'));
 
         $jwtManagement = new JwtManagement(
-            $this->appConfigMock,
+            $this->appConfigStub,
             $presentClock,
-            $this->loggerMock
+            $loggerMock
         );
-        $jsonWebToken = $jwtManagement->create($this->validatedUserMock);
+        $jsonWebToken = $jwtManagement->create($this->validatedUserStub);
         $requestJwt = 'Bearer ' . $jsonWebToken->asString();
 
-        $this->requestMock->method('getHeader')
+        $this->requestStub->method('getHeader')
             ->willReturn([$requestJwt]);
 
-        $jwtManagement->validate($this->requestMock);
+        $jwtManagement->validate($this->requestStub);
     }
 
 
@@ -188,25 +187,26 @@ class JwtManagementTest extends TestCase
         );
         $requestJwt = 'Bearer ' . $token->asString();
 
-        $this->requestMock->method('getHeader')
+        $this->requestStub->method('getHeader')
             ->willReturn([$requestJwt]);
 
-        $this->loggerMock->expects($this->once())
+        $loggerMock = $this->createMock(Logger::class);
+        $loggerMock->expects($this->once())
             ->method('info')
             ->with(LogMessage::fromString('Jwt is valid'));
 
         $this->configureJwtConfig(0, 0, 1, 1, 'HS512');
 
-        $this->appConfigMock
+        $this->appConfigStub
             ->method('getJwtConfig')
             ->willReturn($this->jwtConfigMock);
 
         $jwtManagement = new JwtManagement(
-            $this->appConfigMock,
+            $this->appConfigStub,
             $this->presentClock,
-            $this->loggerMock
+            $loggerMock
         );
-        $jwtManagement->validate($this->requestMock);
+        $jwtManagement->validate($this->requestStub);
     }
 
 
@@ -220,28 +220,26 @@ class JwtManagementTest extends TestCase
         );
         $requestJwt = 'Bearer ' . $token->asString();
 
-        $this->requestMock->method('getHeader')
+        $this->requestStub->method('getHeader')
             ->willReturn([$requestJwt]);
 
-        $this->loggerMock->expects($this->never())
+        $loggerMock = $this->createMock(Logger::class);
+        $loggerMock->expects($this->never())
             ->method('info')
             ->with(LogMessage::fromString('Jwt is valid'));
 
         $this->configureJwtConfig(0, 0, 1, 1, 'HS512');
 
-        $this->appConfigMock
+        $this->appConfigStub
             ->method('getJwtConfig')
             ->willReturn($this->jwtConfigMock);
 
-        $this->usersReaderMock->expects($this->never())
-            ->method('checkIfUserExists');
-
         $jwtManagement = new JwtManagement(
-            $this->appConfigMock,
+            $this->appConfigStub,
             $this->presentClock,
-            $this->loggerMock
+            $loggerMock
         );
-        $jwtManagement->validate($this->requestMock);
+        $jwtManagement->validate($this->requestStub);
     }
 
 
@@ -257,29 +255,27 @@ class JwtManagementTest extends TestCase
         );
         $requestJwt = 'Bearer ' . $token->asString();
 
-        $this->requestMock->method('getHeader')
+        $this->requestStub->method('getHeader')
             ->willReturn([$requestJwt]);
 
-        $this->loggerMock->expects($this->never())
+        $loggerMock = $this->createMock(Logger::class);
+        $loggerMock->expects($this->never())
             ->method('info')
             ->with(LogMessage::fromString('Jwt is valid'));
-        $this->loggerMock->expects($this->once())
+        $loggerMock->expects($this->once())
             ->method('error');
 
         $this->configureJwtConfig(0, 0, 1, 1, 'HS512');
 
-        $this->appConfigMock
+        $this->appConfigStub
             ->method('getJwtConfig')
             ->willReturn($this->jwtConfigMock);
 
-        $this->usersReaderMock->expects($this->never())
-            ->method('checkIfUserExists');
-
         $jwtManagement = new JwtManagement(
-            $this->appConfigMock,
+            $this->appConfigStub,
             $this->presentClock,
-            $this->loggerMock
+            $loggerMock
         );
-        $jwtManagement->validate($this->requestMock);
+        $jwtManagement->validate($this->requestStub);
     }
 }

@@ -21,7 +21,7 @@ class TrainerExceptionMapperTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->url = $this->createMock(Url::class);
+        $this->url = $this->createStub(Url::class);
     }
 
 

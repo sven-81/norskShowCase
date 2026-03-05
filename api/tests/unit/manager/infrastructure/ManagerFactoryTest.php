@@ -12,7 +12,6 @@ use norsk\api\manager\infrastructure\web\controller\WordManager;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
-
 #[CoversClass(ManagerFactory::class)]
 class ManagerFactoryTest extends TestCase
 {
@@ -22,9 +21,9 @@ class ManagerFactoryTest extends TestCase
     protected function setUp(): void
     {
         $this->factory = new ManagerFactory(
-            $this->createMock(Logger::class),
-            $this->createMock(DbConnection::class),
-            $this->createMock(AppConfig::class)
+            $this->createStub(Logger::class),
+            $this->createStub(DbConnection::class),
+            $this->createStub(AppConfig::class)
         );
     }
 
@@ -44,4 +43,3 @@ class ManagerFactoryTest extends TestCase
         $this->assertInstanceOf(VerbManager::class, $verbManager);
     }
 }
-

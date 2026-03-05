@@ -22,7 +22,7 @@ services:
       dockerfile: docker/staging.api.Dockerfile
     volumes:
       - ./api/configs/mySqlConfig.staging.ini:/var/www/html/norsk/api/configs/mySqlConfig.ini
-      - ./api/configs/appConfig.ini:/var/www/html/norsk/api/configs/appConfig.ini
+      - ./api/configs/appConfig.staging.ini:/var/www/html/norsk/api/configs/appConfig.ini
       - ./api/configs/entrypoint.sh:/var/www/html/norsk/api/configs/entrypoint.sh
       - ./api/configs/import.jwt:/var/www/html/norsk/api/configs/import.jwt
       - ./api/logs:/var/www/html/norsk/api/logs:rw
@@ -59,14 +59,29 @@ services:
 
   composer:
     container_name: norsk-composer-staging
-    image: composer:latest
-    command: [ "composer", "--working-dir=/var/www/html/norsk/api", "${CMD:-dump-autoload}", "--ignore-platform-reqs" ]
+    build:
+      context: .
+      dockerfile: docker/composer.Dockerfile
+    entrypoint: ["composer"]
     volumes:
       - ./api:/var/www/html/norsk/api
+    working_dir: /app
     networks:
       - norsk-staging
     depends_on:
       - api
+
+  swagger-ui:
+    image: swaggerapi/swagger-ui
+    container_name: swagger
+    ports:
+      - "8083:8080"
+    volumes:
+      - ./tools/norskApi.yaml:/usr/share/nginx/html/doc/norskApi.yaml
+    environment:
+      API_URL: doc/norskApi.yaml
+    networks:
+      - norsk-staging
 
 networks:
   norsk-staging:

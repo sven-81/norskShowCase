@@ -13,13 +13,12 @@ use norsk\api\user\domain\valueObjects\PasswordVector;
 use norsk\api\user\domain\valueObjects\Salt;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
-use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 
 #[CoversClass(PasswordHash::class)]
 class PasswordHashTest extends TestCase
 {
-    private MockObject|PasswordVector $vectorMock;
+    private PasswordVector $vectorStub;
 
     private Salt $salt;
 
@@ -50,11 +49,11 @@ class PasswordHashTest extends TestCase
             )
         );
 
-        $inputMock = $this->createMock(InputPassword::class);
-        $inputMock->method('asString')
+        $inputStub = $this->createStub(InputPassword::class);
+        $inputStub->method('asString')
             ->willReturn('tooShort');
 
-        PasswordHash::hashBy($inputMock, $this->vectorMock);
+        PasswordHash::hashBy($inputStub, $this->vectorStub);
     }
 
 
@@ -73,25 +72,27 @@ class PasswordHashTest extends TestCase
 
     public function testCanGetPasswordHashAsStringFromPlainPasswordAndSalt(): void
     {
-        $this->vectorMock->expects($this->once())
+        $vectorMock = $this->createMock(PasswordVector::class);
+        $vectorMock->expects($this->once())
             ->method('getSalt')
             ->willReturn($this->salt);
-        $hash = PasswordHash::hashBy(InputPassword::by($this->password), $this->vectorMock);
+        $hash = PasswordHash::hashBy(InputPassword::by($this->password), $vectorMock);
 
         self::assertSame(60, strlen($hash->asHashString()));
-        self::assertStringStartsWith('$2y$10$', $hash->asHashString());
+        self::assertStringStartsWith('$2y$12$', $hash->asHashString());
     }
 
 
     public function testCanValidatedInputPasswordWithSaltAndPepper(): void
     {
-        $this->vectorMock->expects($this->once())
+        $vectorMock = $this->createMock(PasswordVector::class);
+        $vectorMock->expects($this->once())
             ->method('getSalt')
             ->willReturn(Salt::by('de3e535ef9b8bd12a0c4d6a2547a56f2aadc352a269ef8ccd5bef9c0307f2d98'));
 
         $hash = PasswordHash::byValidatedInputPassword(
             InputPassword::by($this->password),
-            $this->vectorMock,
+            $vectorMock,
             PasswordHash::by('$2y$10$c7oMpG/2GArBg1tbIKaL/.lsGEChOZt2dQj1CoxObq6946X3vhjN.')
         );
 
@@ -104,7 +105,8 @@ class PasswordHashTest extends TestCase
     {
         $this->expectExceptionObject(new CredentialsAreInvalidException());
 
-        $this->vectorMock->expects($this->once())
+        $vectorMock = $this->createMock(PasswordVector::class);
+        $vectorMock->expects($this->once())
             ->method('getSalt')
             ->willReturn($this->salt);
 
@@ -112,7 +114,7 @@ class PasswordHashTest extends TestCase
             InputPassword::by(
                 $this->password
             ),
-            $this->vectorMock,
+            $vectorMock,
             PasswordHash::by('otherPassword')
         );
     }
@@ -122,7 +124,7 @@ class PasswordHashTest extends TestCase
     {
         $this->salt = Salt::init();
         $this->salt->generate();
-        $this->vectorMock = $this->createMock(PasswordVector::class);
+        $this->vectorStub = $this->createStub(PasswordVector::class);
         $this->password = 'abc4567890123';
     }
 }

@@ -11,7 +11,7 @@ use norsk\api\shared\domain\German;
 use norsk\api\shared\domain\Id;
 use norsk\api\shared\domain\Norsk;
 use norsk\api\shared\domain\Vocabularies;
-use norsk\api\shared\infrastructure\http\response\ResponseCode;
+use norsk\api\shared\domain\DomainExceptionCode;
 use norsk\api\trainer\domain\exceptions\NoRecordInDatabaseException;
 use norsk\api\trainer\domain\SuccessCounter;
 use norsk\api\trainer\domain\verbs\TrainingVerb;
@@ -65,7 +65,7 @@ class VerbTrainingReader implements TrainingVerbReadingRepository
         if ($result->count() < 1) {
             throw new NoRecordInDatabaseException(
                 'No records found in database for: verbs',
-                ResponseCode::serverError->value
+                DomainExceptionCode::internalError->value
             );
         }
     }

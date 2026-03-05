@@ -7,9 +7,8 @@ namespace norsk\api\manager\infrastructure\persistence;
 use norsk\api\infrastructure\persistence\DbConnection;
 use norsk\api\infrastructure\persistence\Parameters;
 use norsk\api\infrastructure\persistence\SqlResult;
+use norsk\api\manager\domain\ManagedVocabularies;
 use norsk\api\manager\infrastructure\persistence\queries\verbs\GetAllVerbsSql;
-use norsk\api\shared\domain\Vocabularies;
-use norsk\api\shared\infrastructure\http\response\ResponseCode;
 use norsk\api\tests\provider\VerbProvider;
 use norsk\api\trainer\domain\exceptions\NoRecordInDatabaseException;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -31,12 +30,13 @@ class VerbReaderTest extends TestCase
     public function testCanGetAllVerbs(): void
     {
         $verb = VerbProvider::managedVerbToGo();
-        $expectedVerbs = Vocabularies::create();
+        $expectedVerbs = ManagedVocabularies::create();
         $expectedVerbs->add($verb);
 
         $array = VerbProvider::managedVerbToGoFromRecord();
         $result = SqlResult::resultFromArray([$array]);
         $getAllVerbsSql = GetAllVerbsSql::create();
+
         $this->dbConnector->expects($this->once())
             ->method('getResult')
             ->with(
@@ -46,6 +46,7 @@ class VerbReaderTest extends TestCase
             ->willReturn($result);
 
         $verbReader = new VerbReader($this->dbConnector);
+
         self::assertEquals($expectedVerbs, $verbReader->getAllVerbs());
     }
 
@@ -53,14 +54,12 @@ class VerbReaderTest extends TestCase
     public function testThrowsExceptionIfNoRecordsAreFoundWhileTryingToGetAllVerbs(): void
     {
         $this->expectExceptionObject(
-            new NoRecordInDatabaseException(
-                'No records found in database for: verbs',
-                ResponseCode::serverError->value
-            )
+            new NoRecordInDatabaseException('No records found in database for: verbs')
         );
 
         $result = SqlResult::resultFromArray([]);
         $getAllVerbsSql = GetAllVerbsSql::create();
+
         $this->dbConnector->expects($this->once())
             ->method('getResult')
             ->with(
